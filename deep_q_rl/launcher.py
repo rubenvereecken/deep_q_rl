@@ -138,6 +138,10 @@ def process_args(args, defaults, description):
                         type=bool, default=defaults.CUDNN_DETERMINISTIC,
                         help=('Whether to use deterministic backprop. ' +
                               '(default: %(default)s)'))
+    parser.add_argument('--color_averaging', dest="color_averaging",
+                        type=bool, default=defaults.COLOR_AVERAGING,
+                        help=('Whether to use ALE color averaging. ' +
+                              '(default: %(default)s)'))
 
     parameters = parser.parse_args(args)
     if parameters.experiment_prefix is None:
@@ -199,6 +203,7 @@ def launch(args, defaults, description):
     ale.setFloat('repeat_action_probability',
                  parameters.repeat_action_probability)
     ale.setInt('frame_skip', parameters.frame_skip)
+    ale.setBool('color_averaging', parameters.color_averaging)
 
     ale.loadROM(full_rom_path)
 

@@ -148,18 +148,16 @@ class ALEExperiment(object):
 
     def get_observation(self):
         """ Resize and merge the previous two screen images """
-        # TODO I don't like how it takes the maximum, instead of just using
-        # ALE's builtin color_averaging. DeepMind's code does not seem to use
-        # either.
+        # This used to take the average, instead of simply ALE's builtin
+        # color_averaging. DeepMind's code seems to use averaging by default
+        # (through alewrap), so so shall we. Averaging is now set through ALE.
 
         assert self.buffer_count >= 1
+
         index = self.buffer_count % self.buffer_length - 1
-        if self.buffer_count > 1:
-            max_image = np.maximum(self.screen_buffer[index, ...],
-                                self.screen_buffer[index - 1, ...])
-        else:   # Only one frame available, the others contain gibberish
-            max_image = self.screen_buffer[index, ...]
-        return self.resize_image(max_image)
+        image = self.screen_buffer[index, ...]
+
+        return self.resize_image(image)
 
 
     def resize_image(self, image):
