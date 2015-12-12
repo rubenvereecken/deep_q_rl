@@ -40,6 +40,7 @@ class ALEExperiment(object):
         self.max_start_nullops = max_start_nullops
         self.rng = rng
 
+
     def run(self):
         """
         Run the desired number of training epochs, a testing epoch
@@ -54,16 +55,16 @@ class ALEExperiment(object):
                 self.run_epoch(epoch, self.test_length, True)
                 self.agent.finish_testing(epoch)
 
+
     def run_epoch(self, epoch, num_steps, testing=False):
-        """ Run one 'epoch' of training or testing, where an epoch is defined
-        by the number of steps executed. An epoch is never cut short, unlike
-        DeepMind's code. Prints a progress report after every trial.
+        """ Run one 'epoch' of training or testing, where an epoch is defined by
+        the number of steps executed. An epoch will be cut short if not enough
+        steps are left. Prints a progress report after every trial.
 
         Arguments:
         epoch - the current epoch number
         num_steps - steps per epoch
         testing - True if this Epoch is used for testing and not training
-
         """
         self.terminal_lol = False # Make sure each epoch starts with a reset.
         steps_left = num_steps
@@ -77,10 +78,12 @@ class ALEExperiment(object):
 
 
     def _init_episode(self):
-        """ This method resets the game if needed, performs enough null
-        actions to ensure that the screen buffer is ready and optionally
-        performs a randomly determined number of null action to randomize
-        the initial game state."""
+        """
+        This method resets the game if needed, performs enough null actions to
+        ensure that the screen buffer is ready and optionally performs a
+        randomly determined number of null action to randomize the initial game
+        state.
+        """
         
         # TODO what's this guy for
         if not self.terminal_lol or self.ale.game_over():
@@ -91,10 +94,8 @@ class ALEExperiment(object):
                 for _ in range(random_actions):
                     self._act(0) # Null action
 
-        # Make sure the screen buffer is filled at the beginning of
-        # each episode...
-        self._act(0)
-        self._act(0)
+        # I removed the buffer-filling noops since every noop now effectively
+        # takes 4 frames. That's a tad too long.
 
 
     def _act(self, action):
@@ -105,19 +106,12 @@ class ALEExperiment(object):
         reward = self.ale.act(action)
         index = self.buffer_count % self.buffer_length
 
-        # TODO DeepMind uses Y, not grayscale
+        # TODO DeepMind uses luminance, not grayscale. Big diff?
         self.ale.getScreenGrayscale(self.screen_buffer[index, ...])
 
         self.buffer_count += 1
         return reward
 
-    def _step(self, action):
-        """ Repeat one action the appopriate number of times and return
-        the summed reward. """
-        # This used to include a manual frame skip but that part is removed
-        # because ALE supports it itself. 
-        reward = self._act(action)
-        return reward
 
     def run_episode(self, max_steps, testing):
         """Run a single training episode.
@@ -138,7 +132,7 @@ class ALEExperiment(object):
         action = self.agent.start_episode(self.get_observation())
         num_steps = 0
         while True:
-            reward = self._step(self.min_action_set[action])
+            reward = self._act(self.min_action_set[action])
             self.terminal_lol = (self.death_ends_episode and not testing and
                                  self.ale.lives() < start_lives)
             terminal = self.ale.game_over() or self.terminal_lol
@@ -154,12 +148,18 @@ class ALEExperiment(object):
 
     def get_observation(self):
         """ Resize and merge the previous two screen images """
+        # TODO I don't like how it takes the maximum, instead of just using
+        # ALE's builtin color_averaging
 
-        assert self.buffer_count >= 2
+        assert self.buffer_count >= 1
         index = self.buffer_count % self.buffer_length - 1
-        max_image = np.maximum(self.screen_buffer[index, ...],
-                               self.screen_buffer[index - 1, ...])
+        if self.buffer_count > 1:
+            max_image = np.maximum(self.screen_buffer[index, ...],
+                                self.screen_buffer[index - 1, ...])
+        else:   # Only one frame available, the others contain gibberish
+            max_image = self.screen_buffer[index, ...]
         return self.resize_image(max_image)
+
 
     def resize_image(self, image):
         """ Appropriately resize a single image """
