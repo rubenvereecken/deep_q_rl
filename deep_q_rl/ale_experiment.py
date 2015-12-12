@@ -17,13 +17,12 @@ CROP_OFFSET = 8
 class ALEExperiment(object):
     def __init__(self, ale, agent, resized_width, resized_height,
                  resize_method, num_epochs, epoch_length, test_length,
-                 frame_skip, death_ends_episode, max_start_nullops, rng):
+                 death_ends_episode, max_start_nullops, rng):
         self.ale = ale
         self.agent = agent
         self.num_epochs = num_epochs
         self.epoch_length = epoch_length
         self.test_length = test_length
-        self.frame_skip = frame_skip
         self.death_ends_episode = death_ends_episode
         self.min_action_set = ale.getMinimalActionSet()
         self.resized_width = resized_width
@@ -57,8 +56,8 @@ class ALEExperiment(object):
 
     def run_epoch(self, epoch, num_steps, testing=False):
         """ Run one 'epoch' of training or testing, where an epoch is defined
-        by the number of steps executed.  Prints a progress report after
-        every trial
+        by the number of steps executed. An epoch is never cut short, unlike
+        DeepMind's code. Prints a progress report after every trial.
 
         Arguments:
         epoch - the current epoch number
@@ -82,7 +81,8 @@ class ALEExperiment(object):
         actions to ensure that the screen buffer is ready and optionally
         performs a randomly determined number of null action to randomize
         the initial game state."""
-
+        
+        # TODO what's this guy for
         if not self.terminal_lol or self.ale.game_over():
             self.ale.reset_game()
 
@@ -98,14 +98,14 @@ class ALEExperiment(object):
 
 
     def _act(self, action):
-        """Perform the indicated action for a single frame, return the
-        resulting reward and store the resulting screen image in the
-        buffer
-
+        """
+        Perform the indicated action for a single frame, return the resulting
+        reward and store the resulting screen image in the buffer
         """
         reward = self.ale.act(action)
         index = self.buffer_count % self.buffer_length
 
+        # TODO DeepMind uses Y, not grayscale
         self.ale.getScreenGrayscale(self.screen_buffer[index, ...])
 
         self.buffer_count += 1
@@ -114,10 +114,9 @@ class ALEExperiment(object):
     def _step(self, action):
         """ Repeat one action the appopriate number of times and return
         the summed reward. """
-        reward = 0
-        for _ in range(self.frame_skip):
-            reward += self._act(action)
-
+        # This used to include a manual frame skip but that part is removed
+        # because ALE supports it itself. 
+        reward = self._act(action)
         return reward
 
     def run_episode(self, max_steps, testing):

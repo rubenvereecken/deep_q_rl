@@ -151,14 +151,12 @@ def process_args(args, defaults, description):
     else:
         raise ValueError("--death-ends-episode must be true or false")
 
-    if parameters.freeze_interval > 0:
-        # This addresses an inconsistency between the Nature paper and
-        # the Deepmind code.  The paper states that the target network
-        # update frequency is "measured in the number of parameter
-        # updates".  In the code it is actually measured in the number
-        # of action choices.
-        parameters.freeze_interval = (parameters.freeze_interval //
-                                      parameters.update_frequency)
+    # This addresses an inconsistency between the Nature paper and the Deepmind
+    # code. The paper states that the target network update frequency is
+    # "measured in the number of parameter updates". In the code it is actually
+    # measured in the number of action choices.
+    parameters.freeze_interval = (parameters.freeze_interval //
+                                  parameters.update_frequency)
 
     return parameters
 
@@ -189,6 +187,7 @@ def launch(args, defaults, description):
     ale = ale_python_interface.ALEInterface()
     ale.setInt('random_seed', rng.randint(1000))
 
+    # TODO make it display 
     if parameters.display_screen:
         import sys
         if sys.platform == 'darwin':
@@ -199,6 +198,7 @@ def launch(args, defaults, description):
     ale.setBool('display_screen', parameters.display_screen)
     ale.setFloat('repeat_action_probability',
                  parameters.repeat_action_probability)
+    ale.setInt('frame_skip', parameters.frame_skip)
 
     ale.loadROM(full_rom_path)
 
@@ -242,7 +242,6 @@ def launch(args, defaults, description):
                                               parameters.epochs,
                                               parameters.steps_per_epoch,
                                               parameters.steps_per_test,
-                                              parameters.frame_skip,
                                               parameters.death_ends_episode,
                                               parameters.max_start_nullops,
                                               rng)

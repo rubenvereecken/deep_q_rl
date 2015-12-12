@@ -23,7 +23,7 @@ class Defaults:
     # ALE Parameters
     # ----------------------
     BASE_ROM_PATH = "../roms/"
-    ROM = 'breakout.bin'
+    ROM = 'seaquest.bin'
     FRAME_SKIP = 4
     REPEAT_ACTION_PROBABILITY = 0
 
