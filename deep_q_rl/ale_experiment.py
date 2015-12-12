@@ -149,7 +149,8 @@ class ALEExperiment(object):
     def get_observation(self):
         """ Resize and merge the previous two screen images """
         # TODO I don't like how it takes the maximum, instead of just using
-        # ALE's builtin color_averaging
+        # ALE's builtin color_averaging. DeepMind's code does not seem to use
+        # either.
 
         assert self.buffer_count >= 1
         index = self.buffer_count % self.buffer_length - 1
@@ -180,9 +181,10 @@ class ALEExperiment(object):
 
             return cropped
         elif self.resize_method == 'scale':
+            # TODO verify that INTER_NEAREST is better than linear
             return cv2.resize(image,
                               (self.resized_width, self.resized_height),
-                              interpolation=cv2.INTER_LINEAR)
+                              interpolation=cv2.INTER_NEAREST)
         else:
             raise ValueError('Unrecognized image resize method.')
 
