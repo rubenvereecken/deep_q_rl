@@ -18,6 +18,7 @@ class Defaults:
     STEPS_PER_EPOCH = 250000
     EPOCHS = 200
     STEPS_PER_TEST = 125000
+    PROGRESS_FREQUENCY = 5000
 
     # ----------------------
     # ALE Parameters

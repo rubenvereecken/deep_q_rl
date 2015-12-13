@@ -17,7 +17,7 @@ CROP_OFFSET = 8
 class ALEExperiment(object):
     def __init__(self, ale, agent, resized_width, resized_height,
                  resize_method, num_epochs, epoch_length, test_length,
-                 death_ends_episode, max_start_nullops, rng):
+                 death_ends_episode, max_start_nullops, rng, progress_frequency):
         self.ale = ale
         self.agent = agent
         self.num_epochs = num_epochs
@@ -39,6 +39,7 @@ class ALEExperiment(object):
         self.terminal_lol = False # Most recent episode ended on a loss of life
         self.max_start_nullops = max_start_nullops
         self.rng = rng
+        self.progress_frequency = progress_frequency
 
 
     def run(self):
@@ -67,14 +68,19 @@ class ALEExperiment(object):
         testing - True if this Epoch is used for testing and not training
         """
         self.terminal_lol = False # Make sure each epoch starts with a reset.
-        steps_left = num_steps
-        while steps_left > 0:
-            prefix = "testing" if testing else "training"
-            logging.info(prefix + " epoch: " + str(epoch) + " steps_left: " +
-                         str(steps_left))
-            _, num_steps = self.run_episode(steps_left, testing)
+        self.steps_left_this_epoch = num_steps
+        prefix = "testing" if testing else "training"
+        logging.info("starting {} epoch {}".format(prefix, epoch))
 
-            steps_left -= num_steps
+        # It's less pretty, keeping track through self.steps_left_this_epoch,
+        # but it's decidedly better for logging throughout the experiment
+        while self.steps_left_this_epoch > 0:
+            logging.debug(prefix + " epoch: " + str(epoch) + " steps_left: " +
+                         str(self.steps_left_this_epoch))
+            _, num_steps = self.run_episode(self.steps_left_this_epoch, testing)
+            # steps_left -= num_steps
+
+        logging.info("finished {} epoch {}".format(prefix, epoch))
 
 
     def _init_episode(self):
@@ -85,7 +91,6 @@ class ALEExperiment(object):
         state.
         """
         
-        # TODO what's this guy for
         if not self.terminal_lol or self.ale.game_over():
             self.ale.reset_game()
 
@@ -137,6 +142,11 @@ class ALEExperiment(object):
                                  self.ale.lives() < start_lives)
             terminal = self.ale.game_over() or self.terminal_lol
             num_steps += 1
+            self.steps_left_this_epoch -= 1
+
+            if self.steps_left_this_epoch % self.progress_frequency == 0:
+                logging.info("steps_left: " + str(self.steps_left_this_epoch))
+                self.agent.report()
 
             if terminal or num_steps >= max_steps:
                 self.agent.end_episode(reward, terminal)

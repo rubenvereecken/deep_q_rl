@@ -260,13 +260,16 @@ class NeuralAgent(object):
                                      np.clip(reward, -1, 1),
                                      True)
 
-            logging.info("steps/second: {:.2f}".format(\
+            logging.debug("steps/second: {:.2f}".format(\
                             self.step_counter/total_time))
 
             if self.batch_counter > 0:
                 self._update_learning_file()
                 logging.info("average loss: {:.4f}".format(\
                                 np.mean(self.loss_averages)))
+
+    def report(self):
+        pass
 
 
     def finish_epoch(self, epoch):

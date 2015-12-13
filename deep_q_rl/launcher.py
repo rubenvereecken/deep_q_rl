@@ -146,6 +146,10 @@ def process_args(args, defaults, description):
                         type=str, default=logging.DEBUG,
                         help=('Log level to terminal. ' +
                               '(default: %(default)s)'))
+    parser.add_argument('--progress-frequency', dest="progress_frequency",
+                        type=str, default=defaults.PROGRESS_FREQUENCY,
+                        help=('Progress report frequency. ' +
+                              '(default: %(default)s)'))
 
     parameters = parser.parse_args(args)
     if parameters.experiment_prefix is None:
@@ -257,7 +261,8 @@ def launch(args, defaults, description):
                                               parameters.steps_per_test,
                                               parameters.death_ends_episode,
                                               parameters.max_start_nullops,
-                                              rng)
+                                              rng,
+                                              parameters.progress_frequency)
 
 
     experiment.run()
