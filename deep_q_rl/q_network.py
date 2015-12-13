@@ -13,6 +13,7 @@ Nature, 518(7540):529-533, February 2015
 Author of Lasagne port: Nissan Pow
 Modifications: Nathan Sprague
 """
+import logging
 import lasagne
 import numpy as np
 import theano
@@ -154,7 +155,8 @@ class DeepQLearner:
                       output_dim, num_frames, batch_size):
         if network_type in ["nature_cuda", "nature_dnn"] and \
                 not theano.config.device.startswith("gpu"):
-            print "{} network requested but no GPU found, falling back to nature_cpu".format(network_type)
+            logging.warn(network_type + " requested but no GPU found; " +
+                         "defaulting to nature_cpu")
             network_type = "nature_cpu"
 
         if network_type == "nature_cuda":

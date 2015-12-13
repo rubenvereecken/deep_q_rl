@@ -142,6 +142,10 @@ def process_args(args, defaults, description):
                         type=bool, default=defaults.COLOR_AVERAGING,
                         help=('Whether to use ALE color averaging. ' +
                               '(default: %(default)s)'))
+    parser.add_argument('--log_level', dest="log_level",
+                        type=str, default=logging.DEBUG,
+                        help=('Log level to terminal. ' +
+                              '(default: %(default)s)'))
 
     parameters = parser.parse_args(args)
     if parameters.experiment_prefix is None:
@@ -159,8 +163,8 @@ def process_args(args, defaults, description):
     # code. The paper states that the target network update frequency is
     # "measured in the number of parameter updates". In the code it is actually
     # measured in the number of action choices.
-    # Seems like the original author of this code opted for the former.
-    # TODO determine which I'd like best
+    # The default still has the same result as DeepMind's code, only the result 
+    # is achieved like DeepMind's paper describes it.
     parameters.freeze_interval = (parameters.freeze_interval //
                                   parameters.update_frequency)
 
@@ -173,8 +177,10 @@ def launch(args, defaults, description):
     Execute a complete training run.
     """
 
-    logging.basicConfig(level=logging.INFO)
     parameters = process_args(args, defaults, description)
+    logging.basicConfig(level=parameters.log_level,
+                        format='%(asctime)s - %(levelname)s - %(message)s')
+
 
     if parameters.rom.endswith('.bin'):
         rom = parameters.rom
