@@ -204,8 +204,8 @@ class NeuralAgent(object):
 
     def _choose_action(self, data_set, epsilon, cur_img, reward):
         """
-        Add the most recent data to the data set and choose
-        an action based on the current policy.
+        Add the most recent data to the data set and choose an action based on
+        the current policy.
         """
 
         data_set.add_sample(self.last_img, self.last_action, reward, False)

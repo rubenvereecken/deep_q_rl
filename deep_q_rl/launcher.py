@@ -159,6 +159,8 @@ def process_args(args, defaults, description):
     # code. The paper states that the target network update frequency is
     # "measured in the number of parameter updates". In the code it is actually
     # measured in the number of action choices.
+    # Seems like the original author of this code opted for the former.
+    # TODO determine which I'd like best
     parameters.freeze_interval = (parameters.freeze_interval //
                                   parameters.update_frequency)
 

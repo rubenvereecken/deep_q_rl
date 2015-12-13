@@ -48,7 +48,7 @@ class Defaults:
     EPSILON_MIN = .1
     EPSILON_DECAY = 1000000
     PHI_LENGTH = 4
-    UPDATE_FREQUENCY = 4
+    UPDATE_FREQUENCY = 4            # Perform training every {} steps
     REPLAY_MEMORY_SIZE = 1000000
     BATCH_SIZE = 32
     NETWORK_TYPE = "nature_dnn"
