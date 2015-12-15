@@ -245,7 +245,7 @@ class DeepQLearner:
                                   num_frames, batch_size):
         from lasagne.layers import dnn
         conv_layer = dnn.Conv2DDNNLayer
-        return build_nature_network(input_width, input_height, output_dim,
+        return self.build_nature_network(input_width, input_height, output_dim,
                                     num_frames, batch_size, conv_layer)
 
 
