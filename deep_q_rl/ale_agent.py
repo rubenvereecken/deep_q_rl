@@ -39,7 +39,7 @@ class NeuralAgent(object):
         self.image_height = self.network.input_height
 
         # CREATE A FOLDER TO HOLD RESULTS
-        time_str = time.strftime("_%m-%d-%H-%M_", time.gmtime())
+        time_str = time.strftime("_%d-%m-%Y-%H-%M-%S_", time.gmtime())
         self.exp_dir = self.exp_pref + time_str + \
                        "{}".format(self.network.lr).replace(".", "p") + "_" \
                        + "{}".format(self.network.discount).replace(".", "p")
@@ -77,7 +77,7 @@ class NeuralAgent(object):
         self._open_learning_file()
 
         self.episode_counter = 0
-        self.batch_counter = 0
+        self.batch_counter = 0      # Tracks amount of batches trained
 
         self.holdout_data = None
 
@@ -91,7 +91,7 @@ class NeuralAgent(object):
         logging.info("OPENING " + self.exp_dir + '/results.csv')
         self.results_file = open(self.exp_dir + '/results.csv', 'w', 0)
         self.results_file.write(\
-            'epoch,num_episodes,total_reward,reward_per_epoch,mean_q\n')
+            'epoch,num_episodes,total_reward,reward_per_episode,mean_q\n')
         self.results_file.flush()
 
     def _open_learning_file(self):
