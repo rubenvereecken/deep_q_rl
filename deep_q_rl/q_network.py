@@ -217,6 +217,8 @@ class DeepQLearner:
         return np.sqrt(loss)
 
     def q_vals(self, state):
+        # TODO figure out why I need the size of a whole batch (ie 32) yet only
+        # use 1 array
         states = np.zeros((self.batch_size, self.num_frames, self.input_height,
                            self.input_width), dtype=theano.config.floatX)
         states[0, ...] = state

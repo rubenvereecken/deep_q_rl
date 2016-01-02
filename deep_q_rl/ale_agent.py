@@ -288,6 +288,8 @@ class NeuralAgent(object):
         self.testing = False
         holdout_size = 3200
 
+        # TODO check out holdout size in original code
+        # Keep a random subset of transitions to evaluate performance over time
         if self.holdout_data is None and len(self.data_set) > holdout_size:
             self.holdout_data = self.data_set.random_batch(holdout_size)[0]
 
@@ -301,7 +303,7 @@ class NeuralAgent(object):
                                   holdout_sum / holdout_size)
 
         total_time = time.time() - start_time
-        logging.info("Finishing up testing took {:.2f} seconds)".format(total_time))
+        logging.info("Finishing up testing took {:.2f} seconds".format(total_time))
 
 
 if __name__ == "__main__":

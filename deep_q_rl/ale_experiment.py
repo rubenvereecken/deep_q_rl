@@ -91,6 +91,7 @@ class ALEExperiment(object):
         prefix = "testing" if testing else "training"
         logging.info("starting {} epoch {}".format(prefix, epoch))
         epoch_start_time = time.time()
+        self.last_progress_time = epoch_start_time
 
         # It's less pretty, keeping track through self.steps_left_this_epoch,
         # but it's decidedly better for logging throughout the experiment
@@ -167,8 +168,12 @@ class ALEExperiment(object):
             self.steps_left_this_epoch -= 1
 
             if self.steps_left_this_epoch % self.progress_frequency == 0:
-                logging.info("steps_left:\t" + str(self.steps_left_this_epoch))
+                time_since_last = time.time() - self.last_progress_time
+                logging.info("steps_left:\t{}\ttime spent on {} steps:\t{:.2f}s\tsteps/second:\t{:.2f}".format
+                             (self.steps_left_this_epoch, self.progress_frequency, 
+                              time_since_last, self.progress_frequency / time_since_last))
                 self.agent.report()
+                self.last_progress_time = time.time()
 
             if terminal or num_steps >= max_steps:
                 self.agent.end_episode(reward, terminal)
