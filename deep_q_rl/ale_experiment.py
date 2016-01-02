@@ -5,6 +5,7 @@ Author: Nathan Sprague
 
 """
 import logging
+import time
 import numpy as np
 import cv2
 
@@ -40,6 +41,7 @@ class ALEExperiment(object):
         self.max_start_nullops = max_start_nullops
         self.rng = rng
         self.progress_frequency = progress_frequency
+        self.experiment_start_time = time.time()
 
 
     def run(self):
@@ -48,13 +50,30 @@ class ALEExperiment(object):
         is conducted after each training epoch.
         """
         for epoch in range(1, self.num_epochs + 1):
+            epoch_start_time = time.time()
             self.run_epoch(epoch, self.epoch_length)
             self.agent.finish_epoch(epoch)
 
             if self.test_length > 0:
+                epoch_start_time = time.time()
                 self.agent.start_testing()
                 self.run_epoch(epoch, self.test_length, True)
+                total_time = time.time() - epoch_start_time
                 self.agent.finish_testing(epoch)
+
+            logging.info(time.time())
+            total_epoch_time = time.time() - epoch_start_time
+            average_epoch_time = (self.epoch_length+self.test_length)/total_epoch_time
+            logging.info("Finished training + testing epoch {}, took {:.2f}s for {}+{} steps".format(
+                         epoch, total_epoch_time, self.epoch_length, self.test_length) +
+                         " ({:.2f} steps/s on avg)".format(average_epoch_time))
+            logging.info("Expecting the experiment to take about {:.2f} seconds longer".format(
+            (self.num_epochs - epoch) * average_epoch_time))
+            logging.info(time.time())
+
+
+        logging.info("Finished experiment, took {}s".format(
+                    time.time() - self.experiment_start_time))
 
 
     def run_epoch(self, epoch, num_steps, testing=False):
@@ -71,6 +90,7 @@ class ALEExperiment(object):
         self.steps_left_this_epoch = num_steps
         prefix = "testing" if testing else "training"
         logging.info("starting {} epoch {}".format(prefix, epoch))
+        epoch_start_time = time.time()
 
         # It's less pretty, keeping track through self.steps_left_this_epoch,
         # but it's decidedly better for logging throughout the experiment
@@ -80,7 +100,9 @@ class ALEExperiment(object):
             _, num_steps = self.run_episode(self.steps_left_this_epoch, testing)
             # steps_left -= num_steps
 
-        logging.info("finished {} epoch {}".format(prefix, epoch))
+        total_time = time.time() - epoch_start_time
+        logging.info("Finished {} epoch {}; took {:.2f} seconds for {} steps ({:.2f} steps/s on avg)".format(
+                        prefix, epoch, total_time, self.epoch_length, self.epoch_length / total_time))
 
 
     def _init_episode(self):
@@ -145,7 +167,7 @@ class ALEExperiment(object):
             self.steps_left_this_epoch -= 1
 
             if self.steps_left_this_epoch % self.progress_frequency == 0:
-                logging.info("steps_left: " + str(self.steps_left_this_epoch))
+                logging.info("steps_left:\t" + str(self.steps_left_this_epoch))
                 self.agent.report()
 
             if terminal or num_steps >= max_steps:

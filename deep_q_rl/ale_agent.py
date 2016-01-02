@@ -265,7 +265,7 @@ class NeuralAgent(object):
 
             if self.batch_counter > 0:
                 self._update_learning_file()
-                logging.info("average loss: {:.4f}".format(\
+                logging.debug("average loss: {:.4f}".format(\
                                 np.mean(self.loss_averages)))
 
     def report(self):
@@ -284,6 +284,7 @@ class NeuralAgent(object):
         self.episode_counter = 0
 
     def finish_testing(self, epoch):
+        start_time = time.time()
         self.testing = False
         holdout_size = 3200
 
@@ -298,6 +299,9 @@ class NeuralAgent(object):
 
         self._update_results_file(epoch, self.episode_counter,
                                   holdout_sum / holdout_size)
+
+        total_time = time.time() - start_time
+        logging.info("Finishing up testing took {:.2f} seconds)".format(total_time))
 
 
 if __name__ == "__main__":
