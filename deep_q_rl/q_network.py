@@ -154,12 +154,14 @@ class DeepQLearner:
 
     def build_network(self, network_type, input_width, input_height,
                       output_dim, num_frames, batch_size):
-        if network_type.endswith('cuda') or network_type.endswith('cudnn') and \
+        if (network_type.endswith('cuda') or network_type.endswith('cudnn')) and \
                 not theano.config.device.startswith("gpu"):
             prefix = re.sub(r'(_cudnn)|(_cuda)', '', network_type)
-            network_type = "{}_cpu".format(prefix)
-            logging.warn(network_type + " requested but no GPU found; " +
-                         "defaulting to {}".format(network_type))
+            cpu_version = "{}_cpu".format(prefix)
+            logging.warn(network_type + " requested but no GPU found " +
+                         "(device {}) ".format(theano.config.device) +
+                         "defaulting to {}".format(cpu_version))
+            network_type = cpu_version
 
         if network_type == "nature_cuda":
             return self.build_nature_network_cuda(input_width, input_height,
