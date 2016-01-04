@@ -40,6 +40,7 @@ class NeuralAgent(object):
 
         self.exp_dir = save_path
         self.num_actions = self.network.num_actions
+        logging.info("Creating data sets")
         self.data_set = ale_data_set.DataSet(width=self.image_width,
                                              height=self.image_height,
                                              rng=rng,
@@ -52,6 +53,7 @@ class NeuralAgent(object):
                                                   rng=rng,
                                                   max_steps=self.phi_length * 2,
                                                   phi_length=self.phi_length)
+        logging.info("Finished creating data sets")
         self.epsilon = self.epsilon_start
         if self.epsilon_decay != 0:
             self.epsilon_rate = ((self.epsilon_start - self.epsilon_min) /

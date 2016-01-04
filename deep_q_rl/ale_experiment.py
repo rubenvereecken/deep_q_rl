@@ -55,13 +55,10 @@ class ALEExperiment(object):
             self.agent.finish_epoch(epoch)
 
             if self.test_length > 0:
-                epoch_start_time = time.time()
                 self.agent.start_testing()
                 self.run_epoch(epoch, self.test_length, True)
-                total_time = time.time() - epoch_start_time
                 self.agent.finish_testing(epoch)
 
-            logging.info(time.time())
             total_epoch_time = time.time() - epoch_start_time
             average_epoch_time = (self.epoch_length+self.test_length)/total_epoch_time
             logging.info("Finished training + testing epoch {}, took {:.2f}s for {}+{} steps".format(
@@ -103,7 +100,7 @@ class ALEExperiment(object):
 
         total_time = time.time() - epoch_start_time
         logging.info("Finished {} epoch {}; took {:.2f} seconds for {} steps ({:.2f} steps/s on avg)".format(
-                        prefix, epoch, total_time, self.epoch_length, self.epoch_length / total_time))
+                        prefix, epoch, total_time, num_steps, num_steps / total_time))
 
 
     def _init_episode(self):
