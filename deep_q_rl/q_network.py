@@ -331,7 +331,7 @@ class DeepQLearner:
                                num_frames, batch_size):
         from lasagne.layers import cuda_convnet
         conv_layer = cuda_convnet.Conv2DCCLayer
-        return build_nips_network(input_width, input_height, output_dim,
+        return self.build_nips_network(input_width, input_height, output_dim,
                                   num_frames, batch_size, conv_layer)
 
     def build_nips_network_dnn(self, input_width, input_height, output_dim,
@@ -342,14 +342,14 @@ class DeepQLearner:
         # Import it here, in case it isn't installed.
         from lasagne.layers import dnn
         conv_layer = dnn.Conv2DDNNLayer
-        return build_nips_network(input_width, input_height, output_dim,
+        return self.build_nips_network(input_width, input_height, output_dim,
                                   num_frames, batch_size, conv_layer)
 
     def build_nips_network_cpu(self, input_width, input_height, output_dim,
                                num_frames, batch_size):
-        from lasagne.layers import cuda_convnet
-        conv_layer = cuda_convnet.Conv2DLayer
-        return build_nips_network(input_width, input_height, output_dim,
+        from lasagne.layers import conv
+        conv_layer = conv.Conv2DLayer
+        return self.build_nips_network(input_width, input_height, output_dim,
                                   num_frames, batch_size, conv_layer)
 
     def build_nips_network(self, input_width, input_height, output_dim,
@@ -369,8 +369,8 @@ class DeepQLearner:
             nonlinearity=lasagne.nonlinearities.rectify,
             #W=lasagne.init.HeUniform(c01b=True),
             W=lasagne.init.Normal(.01),
-            b=lasagne.init.Constant(.1),
-            dimshuffle=True
+            b=lasagne.init.Constant(.1)
+            # dimshuffle=True
         )
 
         l_conv2 = conv_layer(
@@ -381,8 +381,8 @@ class DeepQLearner:
             nonlinearity=lasagne.nonlinearities.rectify,
             #W=lasagne.init.HeUniform(c01b=True),
             W=lasagne.init.Normal(.01),
-            b=lasagne.init.Constant(.1),
-            dimshuffle=True
+            b=lasagne.init.Constant(.1)
+            # dimshuffle=True
         )
 
         l_hidden1 = lasagne.layers.DenseLayer(

@@ -150,6 +150,8 @@ def process_args(args, defaults, description):
                         type=str, default=defaults.PROGRESS_FREQUENCY,
                         help=('Progress report frequency. ' +
                               '(default: %(default)s)'))
+    parser.add_argument('--save-path', dest='save_path',
+                        type=str, default='../logs')
 
     parameters = parser.parse_args(args)
     if parameters.experiment_prefix is None:
@@ -199,6 +201,12 @@ def launch(args, defaults, description):
 
     if parameters.cudnn_deterministic:
         theano.config.dnn.conv.algo_bwd = 'deterministic'
+
+    try:
+        os.makedirs(parameters.save_path)
+    except OSError as ex:
+        # Directory most likely already exists
+        pass
 
     ale = ale_python_interface.ALEInterface()
     ale.setInt('random_seed', rng.randint(1000))
@@ -250,7 +258,7 @@ def launch(args, defaults, description):
                                   parameters.experiment_prefix,
                                   parameters.replay_start_size,
                                   parameters.update_frequency,
-                                  rng)
+                                  rng, parameters.save_path)
 
     experiment = ale_experiment.ALEExperiment(ale, agent,
                                               defaults.RESIZED_WIDTH,

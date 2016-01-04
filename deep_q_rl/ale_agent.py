@@ -22,7 +22,7 @@ class NeuralAgent(object):
 
     def __init__(self, q_network, epsilon_start, epsilon_min,
                  epsilon_decay, replay_memory_size, exp_pref,
-                 replay_start_size, update_frequency, rng):
+                 replay_start_size, update_frequency, rng, save_path):
 
         self.network = q_network
         self.epsilon_start = epsilon_start
@@ -33,6 +33,7 @@ class NeuralAgent(object):
         self.replay_start_size = replay_start_size
         self.update_frequency = update_frequency
         self.rng = rng
+        self.save_path = save_path
 
         self.phi_length = self.network.num_frames
         self.image_width = self.network.input_width
@@ -40,7 +41,7 @@ class NeuralAgent(object):
 
         # CREATE A FOLDER TO HOLD RESULTS
         time_str = time.strftime("_%d-%m-%Y-%H-%M-%S_", time.gmtime())
-        self.exp_dir = self.exp_pref + time_str + \
+        self.exp_dir = self.save_path + '/' + self.exp_pref + time_str + \
                        "{}".format(self.network.lr).replace(".", "p") + "_" \
                        + "{}".format(self.network.discount).replace(".", "p")
 
