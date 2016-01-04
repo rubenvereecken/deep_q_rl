@@ -5,16 +5,31 @@ run_nips.py or run_nature.py.
 
 """
 import os
+import time
 import argparse
 import logging
 import ale_python_interface
 import cPickle
 import numpy as np
 import theano
+import simplejson as json
 
 import ale_experiment
 import ale_agent
 import q_network
+
+
+def parameters_as_dict(parameters):
+    args_dict = {}
+    args = [arg for arg in dir(parameters) if not arg.startswith('_')]
+    for arg in args:
+        args_dict[arg] = getattr(parameters, arg)
+    return args_dict
+
+def save_parameters(args, save_path):
+    name = '/'.join((save_path, 'parameters' + '.json'))
+    with open(name,'wb') as f:
+        json.dump(parameters_as_dict(args), f, sort_keys=True, indent='\t')
 
 def process_args(args, defaults, description):
     """
@@ -184,6 +199,19 @@ def launch(args, defaults, description):
     """
 
     parameters = process_args(args, defaults, description)
+    try:
+        # CREATE A FOLDER TO HOLD RESULTS
+        time_str = time.strftime("_%d-%m-%Y-%H-%M-%S", time.gmtime())
+        save_path = parameters.save_path + '/' + parameters.experiment_prefix + time_str 
+        os.makedirs(save_path)
+        os.symlink(save_path, parameters.save_path + '/last_' +
+                parameters.experiment_prefix)
+    except OSError as ex:
+        print ex
+        # Directory most likely already exists
+        pass
+
+    save_parameters(parameters, save_path)
     logging.basicConfig(level=parameters.log_level,
                         format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -202,11 +230,6 @@ def launch(args, defaults, description):
     if parameters.cudnn_deterministic:
         theano.config.dnn.conv.algo_bwd = 'deterministic'
 
-    try:
-        os.makedirs(parameters.save_path)
-    except OSError as ex:
-        # Directory most likely already exists
-        pass
 
     ale = ale_python_interface.ALEInterface()
     ale.setInt('random_seed', rng.randint(1000))
@@ -255,10 +278,9 @@ def launch(args, defaults, description):
                                   parameters.epsilon_min,
                                   parameters.epsilon_decay,
                                   parameters.replay_memory_size,
-                                  parameters.experiment_prefix,
                                   parameters.replay_start_size,
                                   parameters.update_frequency,
-                                  rng, parameters.save_path)
+                                  rng, save_path)
 
     experiment = ale_experiment.ALEExperiment(ale, agent,
                                               defaults.RESIZED_WIDTH,

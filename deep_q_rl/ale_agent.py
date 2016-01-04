@@ -21,7 +21,7 @@ sys.setrecursionlimit(10000)
 class NeuralAgent(object):
 
     def __init__(self, q_network, epsilon_start, epsilon_min,
-                 epsilon_decay, replay_memory_size, exp_pref,
+                 epsilon_decay, replay_memory_size,
                  replay_start_size, update_frequency, rng, save_path):
 
         self.network = q_network
@@ -39,20 +39,8 @@ class NeuralAgent(object):
         self.image_width = self.network.input_width
         self.image_height = self.network.input_height
 
-        # CREATE A FOLDER TO HOLD RESULTS
-        time_str = time.strftime("_%d-%m-%Y-%H-%M-%S_", time.gmtime())
-        self.exp_dir = self.save_path + '/' + self.exp_pref + time_str + \
-                       "{}".format(self.network.lr).replace(".", "p") + "_" \
-                       + "{}".format(self.network.discount).replace(".", "p")
-
-        try:
-            os.stat(self.exp_dir)
-        except OSError:
-            os.makedirs(self.exp_dir)
-
+        self.exp_dir = save_path
         self.num_actions = self.network.num_actions
-
-
         self.data_set = ale_data_set.DataSet(width=self.image_width,
                                              height=self.image_height,
                                              rng=rng,
