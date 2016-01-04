@@ -29,7 +29,6 @@ class NeuralAgent(object):
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
         self.replay_memory_size = replay_memory_size
-        self.exp_pref = exp_pref
         self.replay_start_size = replay_start_size
         self.update_frequency = update_frequency
         self.rng = rng
