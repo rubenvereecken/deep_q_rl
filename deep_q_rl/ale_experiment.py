@@ -124,6 +124,8 @@ class ALEExperiment(object):
 
         # I removed the buffer-filling noops since every noop now effectively
         # takes 4 frames. That's a tad too long.
+        # Alright... I added it back in
+        self._act(0)
 
 
     def _act(self, action):
