@@ -66,8 +66,6 @@ class ALEExperiment(object):
                          " ({:.2f} steps/s on avg)".format(average_epoch_time))
             logging.info("Expecting the experiment to take about {:.2f} seconds longer".format(
             (self.num_epochs - epoch) * average_epoch_time))
-            logging.info(time.time())
-
 
         logging.info("Finished experiment, took {}s".format(
                     time.time() - self.experiment_start_time))
@@ -95,8 +93,7 @@ class ALEExperiment(object):
         while self.steps_left_this_epoch > 0:
             logging.debug(prefix + " epoch: " + str(epoch) + " steps_left: " +
                          str(self.steps_left_this_epoch))
-            _, num_steps = self.run_episode(self.steps_left_this_epoch, testing)
-            # steps_left -= num_steps
+            _, steps_run = self.run_episode(self.steps_left_this_epoch, testing)
 
         total_time = time.time() - epoch_start_time
         logging.info("Finished {} epoch {}; took {:.2f} seconds for {} steps ({:.2f} steps/s on avg)".format(
