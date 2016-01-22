@@ -53,6 +53,7 @@ class DeepQLearner:
 
         self.l_out = self.build_network(network_type, input_width, input_height,
                                         num_actions, num_frames, batch_size)
+        # theano.compile.function_dump('network.dump', self.l_out)
         if self.freeze_interval > 0:
             self.next_l_out = self.build_network(network_type, input_width,
                                                  input_height, num_actions,

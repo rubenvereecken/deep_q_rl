@@ -48,12 +48,12 @@ class Defaults:
     REPLAY_MEMORY_SIZE = 1000000
     BATCH_SIZE = 32
     NETWORK_TYPE = "nips_dnn"
-    FREEZE_INTERVAL = -1
+    FREEZE_INTERVAL = 2000            # -1
     REPLAY_START_SIZE = 100
     RESIZE_METHOD = 'crop'
     RESIZED_WIDTH = 84
     RESIZED_HEIGHT = 84
-    DEATH_ENDS_EPISODE = 'false'
+    DEATH_ENDS_EPISODE = 'true'      # false
     MAX_START_NULLOPS = 0
     DETERMINISTIC = True
     CUDNN_DETERMINISTIC = False

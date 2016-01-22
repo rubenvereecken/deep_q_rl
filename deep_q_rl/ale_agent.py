@@ -21,8 +21,8 @@ sys.setrecursionlimit(10000)
 class NeuralAgent(object):
 
     def __init__(self, q_network, epsilon_start, epsilon_min,
-                 epsilon_decay, replay_memory_size,
-                 replay_start_size, update_frequency, rng, save_path):
+                 epsilon_decay, replay_memory_size, replay_start_size, 
+                 update_frequency, rng, save_path, profile):
 
         self.network = q_network
         self.epsilon_start = epsilon_start
@@ -33,6 +33,7 @@ class NeuralAgent(object):
         self.update_frequency = update_frequency
         self.rng = rng
         self.save_path = save_path
+        self.profile = profile
 
         self.phi_length = self.network.num_frames
         self.image_width = self.network.input_width
@@ -263,6 +264,9 @@ class NeuralAgent(object):
 
 
     def finish_epoch(self, epoch):
+        # Things get really nasty in profiling mode
+        if self.profile:
+            return
         net_file = open(self.exp_dir + '/network_file_' + str(epoch) + \
                         '.pkl', 'w')
         cPickle.dump(self.network, net_file, -1)

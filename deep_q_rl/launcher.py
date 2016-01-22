@@ -17,6 +17,7 @@ import simplejson as json
 import ale_experiment
 import ale_agent
 import q_network
+import profile
 
 
 def parameters_as_dict(parameters):
@@ -167,6 +168,7 @@ def process_args(args, defaults, description):
                               '(default: %(default)s)'))
     parser.add_argument('--save-path', dest='save_path',
                         type=str, default='../logs')
+    parser.add_argument('--profile', dest='profile', action='store_true')
 
     parameters = parser.parse_args(args)
     if parameters.experiment_prefix is None:
@@ -214,6 +216,8 @@ def launch(args, defaults, description):
     save_parameters(parameters, save_path)
     logging.basicConfig(level=parameters.log_level,
                         format='%(asctime)s - %(levelname)s - %(message)s')
+    if parameters.profile:
+        profile.configure_theano_for_profiling(save_path)
 
 
     if parameters.rom.endswith('.bin'):
@@ -280,7 +284,8 @@ def launch(args, defaults, description):
                                   parameters.replay_memory_size,
                                   parameters.replay_start_size,
                                   parameters.update_frequency,
-                                  rng, save_path)
+                                  rng, save_path, 
+                                  parameters.profile)
 
     experiment = ale_experiment.ALEExperiment(ale, agent,
                                               defaults.RESIZED_WIDTH,

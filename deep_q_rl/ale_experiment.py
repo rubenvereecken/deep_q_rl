@@ -64,8 +64,8 @@ class ALEExperiment(object):
             logging.info("Finished training + testing epoch {}, took {:.2f}s for {}+{} steps".format(
                          epoch, total_epoch_time, self.epoch_length, self.test_length) +
                          " ({:.2f} steps/s on avg)".format(average_epoch_time))
-            logging.info("Expecting the experiment to take about {:.2f} seconds longer".format(
-            (self.num_epochs - epoch) * average_epoch_time))
+            logging.info("Expecting the experiment ({} epochs ) to take about {:.2f} seconds longer".format(
+                         self.num_epochs - epoch, (self.num_epochs - epoch) * average_epoch_time))
 
         logging.info("Finished experiment, took {}s".format(
                     time.time() - self.experiment_start_time))
@@ -84,7 +84,8 @@ class ALEExperiment(object):
         self.terminal_lol = False # Make sure each epoch starts with a reset.
         self.steps_left_this_epoch = num_steps
         prefix = "testing" if testing else "training"
-        logging.info("starting {} epoch {}".format(prefix, epoch))
+        logging.info("Starting {} epoch {}/{}".format(prefix, epoch,
+            self.num_epochs))
         epoch_start_time = time.time()
         self.last_progress_time = epoch_start_time
 

@@ -15,9 +15,9 @@ class Defaults:
     # ----------------------
     # Experiment Parameters
     # ----------------------
-    STEPS_PER_EPOCH = 50000
-    EPOCHS = 100
-    STEPS_PER_TEST = 10000
+    STEPS_PER_EPOCH = 1000
+    EPOCHS = 1
+    STEPS_PER_TEST = 500
     PROGRESS_FREQUENCY = 5000
 
     # ----------------------
@@ -49,9 +49,9 @@ class Defaults:
     BATCH_SIZE = 32
     NETWORK_TYPE = "nips_cudnn"
     # FREEZE_INTERVAL = 2000
-    FREEZE_INTERVAL = -1
+    FREEZE_INTERVAL = 100
     REPLAY_START_SIZE = 100
-    RESIZE_METHOD = 'crop'
+    RESIZE_METHOD = 'scale'
     RESIZED_WIDTH = 84
     RESIZED_HEIGHT = 84
     # DEATH_ENDS_EPISODE = 'false'
