@@ -69,6 +69,7 @@ class ALEExperiment(object):
 
         logging.info("Finished experiment, took {}s".format(
                     time.time() - self.experiment_start_time))
+        logging.shutdown()
 
 
     def run_epoch(self, epoch, num_steps, testing=False):

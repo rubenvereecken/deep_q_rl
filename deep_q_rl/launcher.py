@@ -206,19 +206,32 @@ def launch(args, defaults, description):
         time_str = time.strftime("_%d-%m-%Y-%H-%M-%S", time.gmtime())
         save_path = parameters.save_path + '/' + parameters.experiment_prefix + time_str 
         os.makedirs(save_path)
-        os.symlink(save_path, parameters.save_path + '/last_' +
-                parameters.experiment_prefix)
     except OSError as ex:
-        print ex
         # Directory most likely already exists
         pass
+    try:
+        link_path = parameters.save_path + '/last_' + parameters.experiment_prefix
+        os.symlink(save_path, link_path)
+    except OSError as ex:
+        os.remove(link_path)
+        os.symlink(save_path, link_path)
 
     save_parameters(parameters, save_path)
-    logging.basicConfig(level=parameters.log_level,
-                        format='%(asctime)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger()
+    logFormatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    # log to file
+    fileHandler = logging.FileHandler("{0}/out.log".format(save_path))
+    fileHandler.setFormatter(logFormatter)
+    logger.addHandler(fileHandler)
+    # log to stdout
+    import sys
+    streamHandler = logging.StreamHandler(sys.stdout)
+    streamHandler.setFormatter(logFormatter)
+    logger.addHandler(streamHandler)
+    logger.setLevel(parameters.log_level)
+
     if parameters.profile:
         profile.configure_theano_for_profiling(save_path)
-
 
     if parameters.rom.endswith('.bin'):
         rom = parameters.rom
