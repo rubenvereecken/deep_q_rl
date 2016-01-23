@@ -50,11 +50,11 @@ class Defaults:
     NETWORK_TYPE = "nips_dnn"
     FREEZE_INTERVAL = 2000            # -1
     REPLAY_START_SIZE = 100
-    RESIZE_METHOD = 'crop'
+    RESIZE_METHOD = 'scale'           # crop
     RESIZED_WIDTH = 84
     RESIZED_HEIGHT = 84
     DEATH_ENDS_EPISODE = 'true'      # false
-    MAX_START_NULLOPS = 0
+    MAX_START_NULLOPS = 10           # 0
     DETERMINISTIC = True
     CUDNN_DETERMINISTIC = False
 
