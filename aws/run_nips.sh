@@ -2,12 +2,13 @@
 
 # Prepare code and logging dir along with common parameters
 # source common.sh
-cp -r /shared/deep_q_rl /root
+MOUNT_PATH=/shared
+cp -r $MOUNT_PATH/deep_q_rl /root
 cd /root/deep_q_rl
 git pull
 cd deep_q_rl
 
-SAVE_PATH=/data/logs
+SAVE_PATH="$MOUNT_PATH/logs"
 mkdir -p $SAVE_PATH
 
 COMMON_PARAMS="--save-path=$SAVE_PATH"
