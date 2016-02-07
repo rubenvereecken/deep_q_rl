@@ -447,7 +447,7 @@ class DeepQLearner:
         #     b=lasagne.init.Constant(.1)
         # )
 
-        default_gate = lasagne.lasers.Gate(
+        default_gate = lasagne.layers.Gate(
             W_in=lasagne.init.Normal(.01),
             W_hid=lasagne.init.Normal(.01),
             W_cell=lasagne.init.Normal(.01),
@@ -461,10 +461,8 @@ class DeepQLearner:
                 ingate = default_gate,
                 outgate = default_gate,
                 forgetgate = default_gate,
-                cell = default_gate
-                # I also define a nonlinearity in outgate, so not entirely sure
-                # where this is applied. Probably just applied _again_. 
-                # TODO maybe change outgate's nonlinearity
+                cell = default_gate,
+                # https://github.com/Lasagne/Lasagne/blob/290379e01e74c842aab5b91d4d46a6a207245684/lasagne/layers/recurrent.py#L1033
                 nonlinearity=lasagne.nonlinearities.rectify,
                 backwards=False, #default
                 learn_init=True,
