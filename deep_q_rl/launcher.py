@@ -159,7 +159,7 @@ def process_args(args, defaults, description):
                         help=('Whether to use ALE color averaging. ' +
                               '(default: %(default)s)'))
     parser.add_argument('--log_level', dest="log_level",
-                        type=str, default=logging.DEBUG,
+                        type=str, default=logging.INFO,
                         help=('Log level to terminal. ' +
                               '(default: %(default)s)'))
     parser.add_argument('--progress-frequency', dest="progress_frequency",

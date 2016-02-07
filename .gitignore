@@ -1,3 +1,4 @@
 *.pyc
 roms
 **/*.ipynb_checkpoints
+results

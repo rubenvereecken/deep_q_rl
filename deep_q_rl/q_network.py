@@ -190,16 +190,8 @@ class DeepQLearner:
         if network_type == "linear":
             return self.build_linear_network(input_width, input_height,
                                              output_dim, num_frames, batch_size)
-        if network_type == "mine_cuda":
-            return self.build_mine_network_cuda(input_width, input_height,
-                                           output_dim, num_frames, batch_size)
-        # Requires cuDNN which is not freely available. 
-        if network_type == "mine_cudnn":
-            return self.build_mine_network_dnn(input_width, input_height,
-                                               output_dim, num_frames,
-                                               batch_size)
-        if network_type == "mine_cpu":
-            return self.build_mine_network_cpu(input_width, input_height,
+        if network_type == "attempt1_cpu":
+            return self.build_attempt1_cpu(input_width, input_height,
                                                  output_dim, num_frames,
                                                  batch_size)
         else:
@@ -234,9 +226,9 @@ class DeepQLearner:
         return np.sqrt(loss)
 
     def q_vals(self, state):
-        # TODO figure out why I need the size of a whole batch (ie 32) yet only
-        # use 1 array
-        states = np.zeros((self.batch_size, self.num_frames, self.input_height,
+        # Might be a slightly cheaper way by reshaping the passed-in state,
+        # though that would destroy the original
+        states = np.zeros((1, self.num_frames, self.input_height,
                            self.input_width), dtype=theano.config.floatX)
         states[0, ...] = state
         self.states_shared.set_value(states)
@@ -361,7 +353,7 @@ class DeepQLearner:
         Build a network consistent with the 2013 NIPS paper.
         """
         l_in = lasagne.layers.InputLayer(
-            shape=(batch_size, num_frames, input_width, input_height)
+            shape=(None, num_frames, input_width, input_height)
         )
 
         l_conv1 = conv_layer(
@@ -399,6 +391,92 @@ class DeepQLearner:
 
         l_out = lasagne.layers.DenseLayer(
             l_hidden1,
+            num_units=output_dim,
+            nonlinearity=None,
+            #W=lasagne.init.HeUniform(),
+            W=lasagne.init.Normal(.01),
+            b=lasagne.init.Constant(.1)
+        )
+
+        return l_out
+
+    def build_attempt1_cpu(self, input_width, input_height, output_dim,
+                               num_frames, batch_size):
+        from lasagne.layers import conv
+        conv_layer = conv.Conv2DLayer
+        return self.build_attempt1(input_width, input_height, output_dim,
+                                  num_frames, batch_size, conv_layer)
+
+    def build_attempt1(self, input_width, input_height, output_dim,
+                           num_frames, batch_size, conv_layer):
+        l_in = lasagne.layers.InputLayer(
+            # Batch size is undefined so we can chuck in as many as we please
+            shape=(None, num_frames, input_width, input_height)
+        )
+
+        l_conv1 = conv_layer(
+            l_in,
+            num_filters=16,
+            filter_size=(8, 8),
+            stride=(4, 4),
+            nonlinearity=lasagne.nonlinearities.rectify,
+            #W=lasagne.init.HeUniform(c01b=True),
+            W=lasagne.init.Normal(.01),
+            b=lasagne.init.Constant(.1)
+            # dimshuffle=True
+        )
+
+        l_conv2 = conv_layer(
+            l_conv1,
+            num_filters=32,
+            filter_size=(4, 4),
+            stride=(2, 2),
+            nonlinearity=lasagne.nonlinearities.rectify,
+            #W=lasagne.init.HeUniform(c01b=True),
+            W=lasagne.init.Normal(.01),
+            b=lasagne.init.Constant(.1)
+            # dimshuffle=True
+        )
+
+        # l_hidden1 = lasagne.layers.DenseLayer(
+        #     l_conv2,
+        #     num_units=256,
+        #     nonlinearity=lasagne.nonlinearities.rectify,
+        #     #W=lasagne.init.HeUniform(),
+        #     W=lasagne.init.Normal(.01),
+        #     b=lasagne.init.Constant(.1)
+        # )
+
+        default_gate = lasagne.lasers.Gate(
+            W_in=lasagne.init.Normal(.01),
+            W_hid=lasagne.init.Normal(.01),
+            W_cell=lasagne.init.Normal(.01),
+            b=lasagne.init.Constant(.1),
+            nonlinearity=lasagne.nonlinearities.sigmoid
+        )
+
+        l_lstm1 = lasagne.layers.LSTMLayer(
+                l_conv2,
+                num_units=256,
+                ingate = default_gate,
+                outgate = default_gate,
+                forgetgate = default_gate,
+                cell = default_gate
+                # I also define a nonlinearity in outgate, so not entirely sure
+                # where this is applied. Probably just applied _again_. 
+                # TODO maybe change outgate's nonlinearity
+                nonlinearity=lasagne.nonlinearities.rectify,
+                backwards=False, #default
+                learn_init=True,
+                peepholes=True, # Internal connection from cell to gates
+                gradient_steps=100, # -1 is entire history 
+                grad_clipping=1, # From alex graves' paper, not sure here
+                precompute_input=True, # Should be a speedup
+                only_return_final=True # Only need output for last frame
+                )
+
+        l_out = lasagne.layers.DenseLayer(
+            l_lstm1,
             num_units=output_dim,
             nonlinearity=None,
             #W=lasagne.init.HeUniform(),

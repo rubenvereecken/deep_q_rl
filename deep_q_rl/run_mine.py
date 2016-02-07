@@ -15,9 +15,9 @@ class Defaults:
     # ----------------------
     # Experiment Parameters
     # ----------------------
-    STEPS_PER_EPOCH = 1000
-    EPOCHS = 1
-    STEPS_PER_TEST = 500
+    STEPS_PER_EPOCH = 50000
+    EPOCHS = 100
+    STEPS_PER_TEST = 10000
     PROGRESS_FREQUENCY = 5000
 
     # ----------------------
@@ -43,20 +43,18 @@ class Defaults:
     EPSILON_START = 1.0
     EPSILON_MIN = .1
     EPSILON_DECAY = 1000000
-    PHI_LENGTH = 4
+    PHI_LENGTH = 1
     UPDATE_FREQUENCY = 1            # Perform training every step
     REPLAY_MEMORY_SIZE = 1000000
     BATCH_SIZE = 32
-    NETWORK_TYPE = "nips_cudnn"
-    # FREEZE_INTERVAL = 2000
-    FREEZE_INTERVAL = 100
+    NETWORK_TYPE = "nips_dnn"
+    FREEZE_INTERVAL = 2000            # -1
     REPLAY_START_SIZE = 100
-    RESIZE_METHOD = 'scale'
+    RESIZE_METHOD = 'scale'           # crop
     RESIZED_WIDTH = 84
     RESIZED_HEIGHT = 84
-    # DEATH_ENDS_EPISODE = 'false'
-    DEATH_ENDS_EPISODE = 'true'
-    MAX_START_NULLOPS = 0
+    DEATH_ENDS_EPISODE = 'true'      # false
+    MAX_START_NULLOPS = 10           # 0
     DETERMINISTIC = True
     CUDNN_DETERMINISTIC = False
 
