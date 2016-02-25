@@ -52,12 +52,12 @@ class DeepQLearner:
         self.update_counter = 0
 
         self.l_out = self.build_network(network_type, input_width, input_height,
-                                        num_actions, num_frames, batch_size)
+                                        num_actions, num_frames, None)
         # theano.compile.function_dump('network.dump', self.l_out)
         if self.freeze_interval > 0:
             self.next_l_out = self.build_network(network_type, input_width,
                                                  input_height, num_actions,
-                                                 num_frames, batch_size)
+                                                 num_frames, None)
             self.reset_q_hat()
 
         states = T.tensor4('states')
@@ -99,7 +99,7 @@ class DeepQLearner:
         target = (rewards +
                   (T.ones_like(terminals) - terminals) *
                   self.discount * T.max(next_q_vals, axis=1, keepdims=True))
-        diff = target - q_vals[T.arange(batch_size),
+        diff = target - q_vals[T.arange(target.shape[0]),
                                actions.reshape((-1,))].reshape((-1, 1))
 
         if self.clip_delta > 0:
@@ -228,11 +228,15 @@ class DeepQLearner:
     def q_vals(self, state):
         # Might be a slightly cheaper way by reshaping the passed-in state,
         # though that would destroy the original
-        states = np.zeros((1, self.num_frames, self.input_height,
+        states = np.empty((1, self.num_frames, self.input_height,
                            self.input_width), dtype=theano.config.floatX)
         states[0, ...] = state
+        return self.more_q_vals(states)[0]
+
+    # TODO use this when testing instead of one at a time
+    def more_q_vals(self, states):
         self.states_shared.set_value(states)
-        return self._q_vals()[0]
+        return self._q_vals()
 
     def choose_action(self, state, epsilon):
         if self.rng.rand() < epsilon:
