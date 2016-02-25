@@ -233,7 +233,7 @@ class NeuralAgent(object):
             # the same sample (i.e. when #samples < #samples_wanted)
             self.num_batches = min(len(data_set) // self.batch_size,
                                    self.max_num_batches)
-            logging.debug("Drawing {} batches".format(self.num_batches))
+            # logging.debug("Drawing {} batches".format(self.num_batches))
             # Draw all the batches in one go
             self.states, self.actions, self.rewards, self.next_states, \
                 self.terminals = self.data_set.random_batch(self.batch_size \

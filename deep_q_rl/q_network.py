@@ -321,7 +321,7 @@ class DeepQLearner:
         if self.rng.rand() < epsilon:
             return self.rng.randint(0, self.num_actions)
         self.state_shared.set_value(state)
-        q_vals = self._single_forward(state)
+        q_vals = self._single_forward()
         return np.argmax(q_vals)
 
     def choose_action_and_train(self, state, epsilon, batch_idx):
