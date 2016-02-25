@@ -169,6 +169,14 @@ def process_args(args, defaults, description):
     parser.add_argument('--save-path', dest='save_path',
                         type=str, default='../logs')
     parser.add_argument('--profile', dest='profile', action='store_true')
+    parser.add_argument('--profile-gpu-mem', dest='profile_gpu_mem',
+                        action='store_true')
+    parser.add_argument('--holdout-size', dest='holdout_size',
+                        type=int, default=defaults.HOLDOUT_SIZE,
+                        help="Holdout size for testing purposes")
+    parser.add_argument('--max-batches', dest='max_num_batches',
+                        type=int, default=defaults.MAX_BATCHES,
+                        help="Amount of batches to be drawn at once")
 
     parameters = parser.parse_args(args)
     if parameters.experiment_prefix is None:
@@ -285,7 +293,9 @@ def launch(args, defaults, description):
                                          parameters.network_type,
                                          parameters.update_rule,
                                          parameters.batch_accumulator,
-                                         rng)
+                                         rng,
+                                         parameters.max_num_batches,
+                                         parameters.holdout_size)
     else:
         handle = open(parameters.nn_file, 'r')
         network = cPickle.load(handle)
@@ -298,7 +308,9 @@ def launch(args, defaults, description):
                                   parameters.replay_start_size,
                                   parameters.update_frequency,
                                   rng, save_path, 
-                                  parameters.profile)
+                                  parameters.profile,
+                                  parameters.max_num_batches,
+                                  parameters.holdout_size)
 
     experiment = ale_experiment.ALEExperiment(ale, agent,
                                               defaults.RESIZED_WIDTH,

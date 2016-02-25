@@ -5,6 +5,7 @@ construct randomly selected batches of phi's from the stored history.
 import numpy as np
 import time
 import theano
+import logging
 
 floatX = theano.config.floatX
 
@@ -89,11 +90,13 @@ class DataSet(object):
         return phi
 
     def random_batch(self, batch_size):
-        """Return corresponding states, actions, rewards, terminal status, and
-next_states for batch_size randomly chosen state transitions.
-
+        """ Return corresponding states, actions, rewards, next states, and
+            terminal status for batch_size randomly chosen state transitions.
         """
+        # logging.debug("data set contains {} samples".format(self.size))
         # Allocate the response.
+        # TODO these dtypes don't correspond to the computation graph
+        # Are they converted correctly?
         states = np.zeros((batch_size,
                            self.phi_length,
                            self.height,

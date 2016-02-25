@@ -10,6 +10,7 @@ import os
 import cPickle
 import time
 import logging
+import theano
 
 import numpy as np
 
@@ -22,7 +23,8 @@ class NeuralAgent(object):
 
     def __init__(self, q_network, epsilon_start, epsilon_min,
                  epsilon_decay, replay_memory_size, replay_start_size, 
-                 update_frequency, rng, save_path, profile):
+                 update_frequency, rng, save_path, profile, max_num_batches,
+                 holdout_size=3200):
 
         self.network = q_network
         self.epsilon_start = epsilon_start
@@ -34,6 +36,13 @@ class NeuralAgent(object):
         self.rng = rng
         self.save_path = save_path
         self.profile = profile
+        # Load several batches at a time into GPU
+        self.holdout_size = holdout_size
+
+        self.max_num_batches = max_num_batches
+        self.batch_size = q_network.batch_size
+        self.num_batches = 0 # Amount of batches in memory
+        self.batch_index = 0 # Next up batch
 
         self.phi_length = self.network.num_frames
         self.image_width = self.network.input_width
@@ -172,15 +181,17 @@ class NeuralAgent(object):
             if len(self.data_set) > self.replay_start_size:
                 self.epsilon = max(self.epsilon_min,
                                    self.epsilon - self.epsilon_rate)
-
-                action = self._choose_action(self.data_set, self.epsilon,
-                                             observation,
-                                             np.clip(reward, -1, 1))
-
                 if self.step_counter % self.update_frequency == 0:
-                    loss = self._do_training()
+                    action, loss = self._choose_action_and_train(self.data_set,
+                            self.epsilon, observation, np.clip(reward, -1, 1))
                     self.batch_counter += 1
                     self.loss_averages.append(loss)
+
+                else:
+                    action = self._choose_action(self.data_set, self.epsilon,
+                                                observation,
+                                                np.clip(reward, -1, 1))
+
 
             else: # Still gathering initial random data...
                 action = self._choose_action(self.data_set, self.epsilon,
@@ -208,17 +219,36 @@ class NeuralAgent(object):
 
         return action
 
-    def _do_training(self):
-        """
-        Returns the average loss for the current batch.
-        May be overridden if a subclass needs to train the network
-        differently.
-        """
-        states, actions, rewards, next_states, terminals = \
-                                self.data_set.random_batch(
-                                    self.network.batch_size)
-        return self.network.train(states, actions, rewards,
-                                  next_states, terminals)
+    def _choose_action_and_train(self, data_set, epsilon, cur_img, reward):
+        data_set.add_sample(self.last_img, self.last_action, reward, False)
+        # assert(self.step_counter >= self.phi_length, 'No implementation for ' + 
+        #         'when replay_start_size < phi_length')
+        random_action = None
+        if self.step_counter < self.phi_length:
+            random_action = self.rng.randint(0, self.num_actions)
+
+        # TODO reset batches after training, i.e before testing
+        if self.batch_index >= self.num_batches:
+            # Only make batches as long as you are never _required_ to redraw
+            # the same sample (i.e. when #samples < #samples_wanted)
+            self.num_batches = min(len(data_set) // self.batch_size,
+                                   self.max_num_batches)
+            logging.debug("Drawing {} batches".format(self.num_batches))
+            # Draw all the batches in one go
+            self.states, self.actions, self.rewards, self.next_states, \
+                self.terminals = self.data_set.random_batch(self.batch_size \
+                    * self.num_batches)
+            self.network.set_batches(self.states, self.actions, self.rewards,
+                    self.next_states, self.terminals)
+            self.batch_index = 0
+
+        phi = data_set.phi(cur_img)
+        action, loss = self.network.choose_action_and_train(phi, epsilon,
+                self.batch_index)
+        if not random_action is None:
+            action = random_action
+        self.batch_index += 1
+        return action, loss
 
 
     def end_episode(self, reward, terminal=True):
@@ -254,6 +284,13 @@ class NeuralAgent(object):
             logging.debug("steps/second: {:.2f}".format(\
                             self.step_counter/total_time))
 
+            # Uncomment this if you want to check gpu memory usage
+            # In the file theano/sandbox/cuda/cuda_ndarray.cu, set the macro 
+            # COMPUTE_GPU_MEM_USED to 1
+            # gpu_mem, gpu_mem_peak = theano.sandbox.cuda.theano_allocated()
+            # logging.debug("GPU memory used: {}, peak GPU memory: {}".format(
+            #             gpu_mem, gpu_mem_peak))
+
             if self.batch_counter > 0:
                 self._update_learning_file()
                 logging.debug("average loss: {:.4f}".format(\
@@ -276,25 +313,24 @@ class NeuralAgent(object):
         self.testing = True
         self.total_reward = 0
         self.episode_counter = 0
+        raise Exception()
 
     def finish_testing(self, epoch):
         start_time = time.time()
         self.testing = False
-        holdout_size = 3200
 
-        # TODO check out holdout size in original code
         # Keep a random subset of transitions to evaluate performance over time
-        if self.holdout_data is None and len(self.data_set) > holdout_size:
-            self.holdout_data = self.data_set.random_batch(holdout_size)[0]
+        if self.holdout_data is None and len(self.data_set) > self.holdout_size:
+            self.holdout_data = self.data_set.random_batch(self.holdout_size)[0]
 
         holdout_sum = 0
         if self.holdout_data is not None:
-            for i in range(holdout_size):
+            for i in range(self.holdout_size):
                 holdout_sum += np.max(
                     self.network.q_vals(self.holdout_data[i, ...]))
 
         self._update_results_file(epoch, self.episode_counter,
-                                  holdout_sum / holdout_size)
+                                  holdout_sum / self.holdout_size)
 
         total_time = time.time() - start_time
         logging.info("Finishing up testing took {:.2f} seconds".format(total_time))

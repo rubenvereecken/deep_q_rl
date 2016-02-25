@@ -31,7 +31,8 @@ class DeepQLearner:
                  num_frames, discount, learning_rate, rho,
                  rms_epsilon, momentum, clip_delta, freeze_interval,
                  batch_size, network_type, update_rule,
-                 batch_accumulator, rng, input_scale=255.0):
+                 batch_accumulator, rng,
+                 max_num_batches, holdout_size, input_scale=255.0):
 
         self.input_width = input_width
         self.input_height = input_height
@@ -46,47 +47,96 @@ class DeepQLearner:
         self.clip_delta = clip_delta
         self.freeze_interval = freeze_interval
         self.rng = rng
+        self.max_num_batches = max_num_batches
+        self.holdout_size = holdout_size
+
+        # The maximum amount of samples that will ever be held in shared
+        # variables. Should fit snugly in the GPU.
+        self.max_num_samples = max(holdout_size, max_num_batches * self.batch_size) \
+                               + 1
 
         lasagne.random.set_rng(self.rng)
 
         self.update_counter = 0
 
         self.l_out = self.build_network(network_type, input_width, input_height,
-                                        num_actions, num_frames, batch_size)
+                                        num_actions, num_frames, self.batch_size
+                                        + 1)
         # theano.compile.function_dump('network.dump', self.l_out)
         if self.freeze_interval > 0:
             self.next_l_out = self.build_network(network_type, input_width,
                                                  input_height, num_actions,
-                                                 num_frames, batch_size)
+                                                 num_frames,
+                                                 self.batch_size)
             self.reset_q_hat()
 
-        states = T.tensor4('states')
-        next_states = T.tensor4('next_states')
-        rewards = T.col('rewards')
-        actions = T.icol('actions')
-        terminals = T.icol('terminals')
 
+        tensor5 = T.TensorType(theano.config.floatX, (False,) * 5)
+
+        # Everything has an extra dimension because we now use multiple batches
+        # states = tensor5('states')
+        # next_states = tensor5('next_states')
+        # rewards = T.matrix('rewards')
+        # actions = T.imatrix('actions')
+        # terminals = T.imatrix('terminals')
+
+        all_states = T.tensor4('states')
+        all_next_states = T.tensor4('next_states')
+        all_rewards = T.col('rewards')
+        all_actions = T.icol('actions')
+        all_terminals = T.icol('terminals')
+        forward_state = T.tensor3('state')
+
+        # set_states = T.tensor4('set_states')
+        # set_next_states = T.tensor4('set_next_states')
+        # set_rewards = T.col('set_rewards')
+        # set_actions = T.icol('set_actions')
+        # set_terminals = T.icol('set_terminals')
+        idx = T.ivector()
+
+        # TODO meh
         self.states_shared = theano.shared(
-            np.zeros((batch_size, num_frames, input_height, input_width),
-                     dtype=theano.config.floatX))
+            np.zeros((self.max_num_samples, num_frames, input_height, input_width),
+                     dtype=theano.config.floatX),
+            name='states_shared')
+
+        self.state_shared = theano.shared(np.zeros((num_frames, input_height, input_width),
+                        dtype=theano.config.floatX),
+            name='state_shared')
 
         self.next_states_shared = theano.shared(
-            np.zeros((batch_size, num_frames, input_height, input_width),
-                     dtype=theano.config.floatX))
+            np.zeros((self.max_num_samples, num_frames, input_height, input_width),
+                     dtype=theano.config.floatX),
+            name='next_states_shared')
 
         self.rewards_shared = theano.shared(
-            np.zeros((batch_size, 1), dtype=theano.config.floatX),
-            broadcastable=(False, True))
+            np.zeros((self.max_num_samples, 1), dtype=theano.config.floatX),
+            broadcastable=(False, True),
+            name='rewards_shared')
 
         self.actions_shared = theano.shared(
-            np.zeros((batch_size, 1), dtype='int32'),
-            broadcastable=(False, True))
+            np.zeros((self.max_num_samples, 1), dtype='int32'),
+            broadcastable=(False, True), name='actions_shared')
 
         self.terminals_shared = theano.shared(
-            np.zeros((batch_size, 1), dtype='int32'),
-            broadcastable=(False, True))
+            np.zeros((self.max_num_samples, 1), dtype='int32'),
+            broadcastable=(False, True), name='terminals_shared')
 
-        q_vals = lasagne.layers.get_output(self.l_out, states / input_scale)
+        self.idx_shared = theano.shared(np.zeros(batch_size, dtype=np.int32), 
+                name='idx_shared')
+
+        # Alright get this, this is a very nasty hack.
+        # We'll always assume the first input sample is just one that tags along
+        # because we want its qvalue but we NEVER want to use it for training
+        # Manually set that first sample's effect on the loss to 0
+        states = all_states[idx]
+        next_states = all_next_states[idx]
+        terminals = all_terminals[idx]
+        rewards = all_rewards[idx]
+        actions = all_actions[idx]
+
+        q_vals = lasagne.layers.get_output(self.l_out, 
+                T.concatenate(([forward_state], states)) / input_scale)
         
         if self.freeze_interval > 0:
             next_q_vals = lasagne.layers.get_output(self.next_l_out,
@@ -99,8 +149,11 @@ class DeepQLearner:
         target = (rewards +
                   (T.ones_like(terminals) - terminals) *
                   self.discount * T.max(next_q_vals, axis=1, keepdims=True))
-        diff = target - q_vals[T.arange(batch_size),
+        # Ignore the first one 
+        diff = target - q_vals[T.arange(1, self.batch_size + 1),
                                actions.reshape((-1,))].reshape((-1, 1))
+        # Discard the first diff as we don't want it to impact training
+        # diff = diff[T.arange(1,self.batch_size)]
 
         if self.clip_delta > 0:
             # If we simply take the squared clipped diff as our loss,
@@ -127,11 +180,18 @@ class DeepQLearner:
 
         params = lasagne.layers.helper.get_all_params(self.l_out)  
         givens = {
-            states: self.states_shared,
-            next_states: self.next_states_shared,
-            rewards: self.rewards_shared,
-            actions: self.actions_shared,
-            terminals: self.terminals_shared
+            all_states: self.states_shared,
+            all_next_states: self.next_states_shared,
+            all_rewards: self.rewards_shared,
+            all_actions: self.actions_shared,
+            all_terminals: self.terminals_shared,
+            forward_state: self.state_shared,
+            idx: self.idx_shared,
+        }
+        state_givens = {
+            all_states: self.states_shared,
+            forward_state: self.state_shared,
+            idx: self.idx_shared,
         }
         if update_rule == 'deepmind_rmsprop':
             updates = deepmind_rmsprop(loss, params, self.lr, self.rho,
@@ -148,10 +208,18 @@ class DeepQLearner:
             updates = lasagne.updates.apply_momentum(updates, None,
                                                      self.momentum)
 
-        self._train = theano.function([], [loss, q_vals], updates=updates,
-                                      givens=givens)
-        self._q_vals = theano.function([], q_vals,
-                                       givens={states: self.states_shared})
+        # This is the one that tags along
+        head_q_vals = q_vals[0]
+        tail_q_vals = q_vals[1:]
+
+        self._single_forward_and_train = theano.function([], [loss,
+                        head_q_vals], updates=updates, givens=givens)
+
+        self._single_forward = theano.function([], [head_q_vals], givens=state_givens)
+
+        # self._q_vals = theano.function([idx], [tail_q_vals], givens=state_givens)
+
+
 
     def build_network(self, network_type, input_width, input_height,
                       output_dim, num_frames, batch_size):
@@ -197,48 +265,89 @@ class DeepQLearner:
         else:
             raise ValueError("Unrecognized network: {}".format(network_type))
 
-    def train(self, states, actions, rewards, next_states, terminals):
+    def set_batches(self, states, actions, rewards, next_states, terminals):
         """
-        Train one batch.
+        Prepare a bunch of batches for training.
+        Below, n is the number of batches drawn at a time.
 
         Arguments:
 
-        states - b x f x h x w numpy array, where b is batch size,
+        states - n x b x f x h x w numpy array, where b is batch size,
                  f is num frames, h is height and w is width.
-        actions - b x 1 numpy array of integers
-        rewards - b x 1 numpy array
-        next_states - b x f x h x w numpy array
-        terminals - b x 1 numpy boolean array (currently ignored)
-
-        Returns: average loss
+        actions - n x b x 1 numpy array of integers
+        rewards - n x b x 1 numpy array
+        next_states - n x b x f x h x w numpy array
+        terminals - n x b x 1 numpy boolean array (currently ignored)
         """
-
         self.states_shared.set_value(states)
         self.next_states_shared.set_value(next_states)
         self.actions_shared.set_value(actions)
         self.rewards_shared.set_value(rewards)
         self.terminals_shared.set_value(terminals)
-        if (self.freeze_interval > 0 and
-            self.update_counter % self.freeze_interval == 0):
-            self.reset_q_hat()
-        loss, _ = self._train()
-        self.update_counter += 1
-        return np.sqrt(loss)
 
-    def q_vals(self, state):
-        # Might be a slightly cheaper way by reshaping the passed-in state,
-        # though that would destroy the original
-        states = np.zeros((1, self.num_frames, self.input_height,
-                           self.input_width), dtype=theano.config.floatX)
-        states[0, ...] = state
-        self.states_shared.set_value(states)
-        return self._q_vals()[0]
+    # def train(self, states, actions, rewards, next_states, terminals):
+    #     """
+    #     Train one batch.
+
+    #     Arguments:
+
+    #     states - b x f x h x w numpy array, where b is batch size,
+    #              f is num frames, h is height and w is width.
+    #     actions - b x 1 numpy array of integers
+    #     rewards - b x 1 numpy array
+    #     next_states - b x f x h x w numpy array
+    #     terminals - b x 1 numpy boolean array (currently ignored)
+
+    #     Returns: average loss
+    #     """
+    #     self.states_shared.set_value(states)
+    #     self.next_states_shared.set_value(next_states)
+    #     self.actions_shared.set_value(actions)
+    #     self.rewards_shared.set_value(rewards)
+    #     self.terminals_shared.set_value(terminals)
+    #     if (self.freeze_interval > 0 and
+    #         self.update_counter % self.freeze_interval == 0):
+    #         self.reset_q_hat()
+    #     loss, _ = self._train()
+    #     self.update_counter += 1
+    #     return np.sqrt(loss)
+
+    # def q_vals(self, state):
+    #     assert(len(state) == self.batch_size)
+    #     self.states_shared.set_value(states)
+    #     return self._q_vals()
 
     def choose_action(self, state, epsilon):
         if self.rng.rand() < epsilon:
             return self.rng.randint(0, self.num_actions)
-        q_vals = self.q_vals(state)
+        self.state_shared.set_value(state)
+        q_vals = self._single_forward(state)
         return np.argmax(q_vals)
+
+    def choose_action_and_train(self, state, epsilon, batch_idx):
+        """
+        returns (action, loss)
+        """
+        # Choose action part
+        action = None
+        if self.rng.rand() < epsilon:
+            action = self.rng.randint(0, self.num_actions)
+        else:
+            # Set the first state. The other <batch_size> samples will be used
+            # for training
+            # self.set_shared_states([0], [state])
+            self.state_shared.set_value(state)
+        # Determine the current batch indices
+        batch_offset = batch_idx * self.batch_size
+        batch_indices = np.arange(batch_offset, batch_offset + self.batch_size,
+                                  dtype=np.int32)
+        self.idx_shared.set_value(batch_indices)
+        # Add the first one for qvals
+        # all_indices = np.hstack([0], batch_indices)
+        loss, q_vals = self._single_forward_and_train()
+        if action is None:
+            action = np.argmax(q_vals)
+        return action, np.sqrt(loss)
 
     def reset_q_hat(self):
         all_params = lasagne.layers.helper.get_all_param_values(self.l_out)
