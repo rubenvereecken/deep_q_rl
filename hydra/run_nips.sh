@@ -18,7 +18,7 @@ echo "Saving to $SAVE_PATH"
 
 PARAMS="--save-path=$SAVE_PATH -r ${ROM} --network-type=${NETWORK_TYPE} --log_level=DEBUG"
 
-echo "Running job on $HOST - " `date`
+echo "Running ${ROM} with ${NETWORK_TYPE} on $HOST - " `date`
 
 # All defaults will be overwritten by arguments passed to this script
 ./deep_q_rl/run_nips.py $PARAMS $@
