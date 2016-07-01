@@ -2,6 +2,9 @@
 #PBS -l nodes=1:ppn=1
 #PBS -M rvereeck@vub.ac.be
 #PBS -m abe
+#PBS -d $HOME/deep_q_rl/deep_q_rl/
+#PBS -o $WORKDIR/out.txt
+#PBS -j oe
 
 TIME_STR=`python -c "import time; print time.strftime('%d-%m-%Y_%H-%M-%S')"` 
 
