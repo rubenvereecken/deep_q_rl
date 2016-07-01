@@ -60,12 +60,13 @@ class ALEExperiment(object):
                 self.agent.finish_testing(epoch)
 
             total_epoch_time = time.time() - epoch_start_time
-            average_epoch_time = (self.epoch_length+self.test_length)/total_epoch_time
+            average_epoch_speed = (self.epoch_length+self.test_length)/total_epoch_time
+            epochs_left = self.num_epochs - epoch
             logging.info("Finished training + testing epoch {}, took {:.2f}s for {}+{} steps".format(
                          epoch, total_epoch_time, self.epoch_length, self.test_length) +
-                         " ({:.2f} steps/s on avg)".format(average_epoch_time))
+                         " ({:.2f} steps/s on avg)".format(average_epoch_speed))
             logging.info("Expecting the experiment ({} epochs ) to take about {:.2f} seconds longer".format(
-                         self.num_epochs - epoch, (self.num_epochs - epoch) * average_epoch_time))
+                         epochs_left, epochs_left * total_epoch_time))
 
         logging.info("Finished experiment, took {}s".format(
                     time.time() - self.experiment_start_time))
