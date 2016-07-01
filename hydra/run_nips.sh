@@ -2,7 +2,7 @@
 #PBS -l nodes=1:ppn=1
 #PBS -M rvereeck@vub.ac.be
 #PBS -m abe
-#PBS -d $HOME/deep_q_rl/deep_q_rl/
+#PBS -d /u/rvereeck/deep_q_rl/deep_q_rl/
 #PBS -o $WORKDIR/out.txt
 #PBS -j oe
 
