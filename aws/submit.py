@@ -25,7 +25,7 @@ if __name__ == '__main__':
         # Directory most likely already exists
         pass
     
-    time_str = time.strftime("_%d-%m-%Y-%H-%M-%S", time.gmtime())
+    time_str = time.strftime("%d-%m-%Y-%H-%M-%S", time.gmtime())
     pre = params.label + '-' if params.label else ''
     filename = params.jobdir + '/' + pre + time_str + '.desc'
 
@@ -38,7 +38,7 @@ if __name__ == '__main__':
         print "Script to submit to queue does not exist"
         sys.exit(-1)
 
-    with open(filename) as f:
+    with open(filename, 'w') as f:
         json.dump({
             rom: params.rom,
             network: params.network,
