@@ -40,12 +40,12 @@ if __name__ == '__main__':
 
     with open(filename, 'w') as f:
         json.dump({
-            rom: params.rom,
-            network: params.network,
-            label: pre + time_str,
-            log: params.log,
-            args: params.args,
-            script: params.script,
-            id_: datetime.now().microsecond
+            "rom": params.rom,
+            'network': params.network,
+            'label': pre + time_str,
+            'log': params.log,
+            'args': params.args,
+            'script': params.script,
+            'id_': datetime.now().microsecond
         }, f)
     
