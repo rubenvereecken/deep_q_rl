@@ -38,7 +38,7 @@ if __name__ == '__main__':
         print "Script to submit to queue does not exist"
         sys.exit(-1)
 
-    with open(os.path.isfile) as f:
+    with open(filename) as f:
         json.dump({
             rom: params.rom,
             network: params.network,
