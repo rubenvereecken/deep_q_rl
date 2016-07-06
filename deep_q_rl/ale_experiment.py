@@ -18,10 +18,13 @@ CROP_OFFSET = 8
 class ALEExperiment(object):
     def __init__(self, ale, agent, resized_width, resized_height,
                  resize_method, num_epochs, epoch_length, test_length,
-                 death_ends_episode, max_start_nullops, rng, progress_frequency):
+                 death_ends_episode, max_start_nullops, rng, progress_frequency,
+                 start_epoch=1):
         self.ale = ale
         self.agent = agent
         self.num_epochs = num_epochs
+        self.start_epoch = start_epoch
+        # self.epoch = start_epoch        # Above 1 when resuming
         self.epoch_length = epoch_length
         self.test_length = test_length
         self.death_ends_episode = death_ends_episode
@@ -49,7 +52,8 @@ class ALEExperiment(object):
         Run the desired number of training epochs, a testing epoch
         is conducted after each training epoch.
         """
-        for epoch in range(1, self.num_epochs + 1):
+        for self.epoch in range(self.start_epoch, self.num_epochs + 1):
+            epoch = self.epoch
             epoch_start_time = time.time()
             self.run_epoch(epoch, self.epoch_length)
             self.agent.finish_epoch(epoch)
@@ -175,7 +179,7 @@ class ALEExperiment(object):
                 self.last_progress_time = time.time()
 
             if terminal or num_steps >= max_steps:
-                self.agent.end_episode(reward, terminal)
+                self.agent.end_episode(reward, self.epoch, terminal)
                 break
 
             action = self.agent.step(reward, self.get_observation())

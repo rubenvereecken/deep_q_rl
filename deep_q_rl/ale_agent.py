@@ -79,16 +79,21 @@ class NeuralAgent(object):
         self.last_action = None
 
     def _open_results_file(self):
-        logging.info("OPENING " + self.exp_dir + '/results.csv')
-        self.results_file = open(self.exp_dir + '/results.csv', 'w', 0)
-        self.results_file.write(\
-            'epoch,num_episodes,total_reward,reward_per_episode,mean_q\n')
-        self.results_file.flush()
+        already_existed = os.path.exists(self.exp_dir + '/results.csv')
+        write_mode = 'a' if already_existed else 'w'
+        self.results_file = open(self.exp_dir + '/results.csv', write_mode, 0)
+        if not already_existed:
+            self.results_file.write(\
+                'epoch,num_episodes,total_reward,reward_per_episode,mean_q\n')
+            self.results_file.flush()
 
     def _open_learning_file(self):
-        self.learning_file = open(self.exp_dir + '/learning.csv', 'w', 0)
-        self.learning_file.write('mean_loss,epsilon\n')
-        self.learning_file.flush()
+        already_existed = os.path.exists(self.exp_dir + '/learning.csv')
+        write_mode = 'a' if already_existed else 'w'
+        self.learning_file = open(self.exp_dir + '/learning.csv', write_mode, 0)
+        if not already_existed:
+            self.learning_file.write('epoch,episode,mean_loss,epsilon\n')
+            self.learning_file.flush()
 
     def _update_results_file(self, epoch, num_episodes, holdout_sum):
         out = "{},{},{},{},{}\n".format(epoch, num_episodes, self.total_reward,
@@ -97,9 +102,9 @@ class NeuralAgent(object):
         self.results_file.write(out)
         self.results_file.flush()
 
-    def _update_learning_file(self):
-        out = "{},{}\n".format(np.mean(self.loss_averages),
-                               self.epsilon)
+    def _update_learning_file(self, epoch):
+        out = "{},{},{},{}\n".format(epoch, self.episode_counter, 
+                np.mean(self.loss_averages), self.epsilon)
         self.learning_file.write(out)
         self.learning_file.flush()
 
@@ -221,7 +226,7 @@ class NeuralAgent(object):
                                   next_states, terminals)
 
 
-    def end_episode(self, reward, terminal=True):
+    def end_episode(self, reward, epoch, terminal=True):
         """
         This function is called once at the end of an episode.
 
@@ -255,7 +260,7 @@ class NeuralAgent(object):
                             self.step_counter/total_time))
 
             if self.batch_counter > 0:
-                self._update_learning_file()
+                self._update_learning_file(epoch)
                 logging.debug("average loss: {:.4f}".format(\
                                 np.mean(self.loss_averages)))
 

@@ -32,6 +32,11 @@ def save_parameters(args, save_path):
     with open(name,'wb') as f:
         json.dump(parameters_as_dict(args), f, sort_keys=True, indent='\t')
 
+# hackity hack
+class Struct:
+    def __init__(self, **entries): 
+        self.__dict__.update(entries)
+
 def process_args(args, defaults, description):
     """
     Handle the command line.
@@ -169,15 +174,26 @@ def process_args(args, defaults, description):
     parser.add_argument('--save-path', dest='save_path',
                         type=str, default='../logs')
     parser.add_argument('--profile', dest='profile', action='store_true')
+    parser.add_argument('--resume', dest='resume', default=False,
+            action='store_true', help='Resume from save_path')
 
     parameters = parser.parse_args(args)
+    if parameters.resume:
+        with open(parameters.save_path + '/parameters.json', 'r') as f:
+            param_dict = json.load(f)
+            param_dict['resume'] = True
+            param_dict['save_path'] = parameters.save_path
+            parameters = Struct(**param_dict)
+            print parameters.death_ends_episode
+        print "Resuming operation on {}".format(parameters.save_path)
+
     if parameters.experiment_prefix is None:
         name = os.path.splitext(os.path.basename(parameters.rom))[0]
         parameters.experiment_prefix = name
 
-    if parameters.death_ends_episode == 'true':
+    if parameters.death_ends_episode in ['true', True]:
         parameters.death_ends_episode = True
-    elif parameters.death_ends_episode == 'false':
+    elif parameters.death_ends_episode in ['false', False]:
         parameters.death_ends_episode = False
     else:
         raise ValueError("--death-ends-episode must be true or false")
@@ -201,22 +217,38 @@ def launch(args, defaults, description):
     """
 
     parameters = process_args(args, defaults, description)
-    try:
-        # CREATE A FOLDER TO HOLD RESULTS
-        time_str = time.strftime("_%d-%m-%Y-%H-%M-%S", time.gmtime())
-        save_path = parameters.save_path + '/' + parameters.experiment_prefix + time_str 
-        os.makedirs(save_path)
-    except OSError as ex:
-        # Directory most likely already exists
-        pass
-    try:
-        link_path = parameters.save_path + '/last_' + parameters.experiment_prefix
-        os.symlink(save_path, link_path)
-    except OSError as ex:
-        os.remove(link_path)
-        os.symlink(save_path, link_path)
+    start_epoch = 1
+    if parameters.resume:
+        # Resume from last saved network
+        network_file_tpl = os.path.join(parameters.save_path,'network_file_{}.pkl')
+        for i in range(parameters.epochs):
+            if not os.path.exists(network_file_tpl.format(i+1)):
+                break
 
-    save_parameters(parameters, save_path)
+        if i == 0:
+            parameters.nn_file = None
+        else:
+            parameters.nn_file = network_file_tpl.format(i)
+        start_epoch = i + 1
+        save_path = parameters.save_path
+    else:
+        try:
+            # CREATE A FOLDER TO HOLD RESULTS
+            time_str = time.strftime("_%d-%m-%Y-%H-%M-%S", time.gmtime())
+            save_path = parameters.save_path + '/' + parameters.experiment_prefix + time_str 
+            os.makedirs(save_path)
+        except OSError as ex:
+            # Directory most likely already exists
+            pass
+        try:
+            link_path = parameters.save_path + '/last_' + parameters.experiment_prefix
+            os.symlink(save_path, link_path)
+        except OSError as ex:
+            os.remove(link_path)
+            os.symlink(save_path, link_path)
+
+        save_parameters(parameters, save_path)
+
     logger = logging.getLogger()
     logFormatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     # log to file
@@ -310,7 +342,8 @@ def launch(args, defaults, description):
                                               parameters.death_ends_episode,
                                               parameters.max_start_nullops,
                                               rng,
-                                              parameters.progress_frequency)
+                                              parameters.progress_frequency,
+                                              start_epoch)
 
 
     experiment.run()
