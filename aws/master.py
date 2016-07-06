@@ -2,9 +2,8 @@ import os
 import time
 import argparse
 import sys
-import json
-import glob
 import re
+import subprocess
 
 def qstat():
     raw = subprocess.check_output(['qstat'])
