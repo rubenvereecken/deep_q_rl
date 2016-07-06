@@ -20,8 +20,7 @@ if __name__ == '__main__':
     MOUNT_PATH = '/shared'
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-w', '--watch-dir', dest='watch_dir'
-            default=MOUNT_PATH + '/logs')
+    parser.add_argument('-w', '--watch-dir', dest='watch_dir', default=MOUNT_PATH + '/logs')
     parser.add_argument('-i', '--interval', default=5, help='in seconds')
     # parser.add_argument('-t', '--timeout', default=5, help='heartbeat timeout')
     params = parser.parse_args(sys.argv[1:])
