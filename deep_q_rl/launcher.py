@@ -173,6 +173,8 @@ def process_args(args, defaults, description):
                               '(default: %(default)s)'))
     parser.add_argument('--save-path', dest='save_path',
                         type=str, default='../logs')
+    parser.add_argument('--dont-generate-logdir', dest='generate_logdir',
+            default=False, action='store_true')
     parser.add_argument('--profile', dest='profile', action='store_true')
     parser.add_argument('--resume', dest='resume', default=False,
             action='store_true', help='Resume from save_path')
@@ -218,6 +220,7 @@ def launch(args, defaults, description):
 
     parameters = process_args(args, defaults, description)
     start_epoch = 1
+    save_path = parameters.save_path
     if parameters.resume:
         # Resume from last saved network
         network_file_tpl = os.path.join(parameters.save_path,'network_file_{}.pkl')
@@ -230,22 +233,22 @@ def launch(args, defaults, description):
         else:
             parameters.nn_file = network_file_tpl.format(i)
         start_epoch = i + 1
-        save_path = parameters.save_path
     else:
-        try:
-            # CREATE A FOLDER TO HOLD RESULTS
-            time_str = time.strftime("_%d-%m-%Y-%H-%M-%S", time.gmtime())
-            save_path = parameters.save_path + '/' + parameters.experiment_prefix + time_str 
-            os.makedirs(save_path)
-        except OSError as ex:
-            # Directory most likely already exists
-            pass
-        try:
-            link_path = parameters.save_path + '/last_' + parameters.experiment_prefix
-            os.symlink(save_path, link_path)
-        except OSError as ex:
-            os.remove(link_path)
-            os.symlink(save_path, link_path)
+        if not parameters.dont_generate_logdir:
+            try:
+                # CREATE A FOLDER TO HOLD RESULTS
+                time_str = time.strftime("_%d-%m-%Y-%H-%M-%S", time.gmtime())
+                save_path = parameters.save_path + '/' + parameters.experiment_prefix + time_str 
+                os.makedirs(save_path)
+            except OSError as ex:
+                # Directory most likely already exists
+                pass
+            try:
+                link_path = parameters.save_path + '/last_' + parameters.experiment_prefix
+                os.symlink(save_path, link_path)
+            except OSError as ex:
+                os.remove(link_path)
+                os.symlink(save_path, link_path)
 
         save_parameters(parameters, save_path)
 
