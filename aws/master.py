@@ -8,8 +8,10 @@ import subprocess
 def qstat():
     raw = subprocess.check_output(['qstat'])
     raw = re.sub(r'( )+', ' ', raw)
-    raw = re.sub(r'^ +', '', raw)
+    trim_leading = lambda x: re.sub(r'^ +', '', x)
     lines = raw.split('\n')[2:]
+    lines = map(trim_leading, lines)
+    lines = filter(lambda x: len(x) != 0, lines)
     names = map(lambda l: l[2], lines)
     states = map(lambda l: l[4], lines)
     print names, states
