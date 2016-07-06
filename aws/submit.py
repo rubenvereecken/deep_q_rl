@@ -12,8 +12,8 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--jobdir', default=MOUNT_PATH + '/jobs')
     parser.add_argument('-e', '--script', default='./run.sh')
     parser.add_argument('-r', '--rom', required=True)
-    parser.add_argument('-n', '--network', default='nip_cudnn')
-    parser.add_argument('-l', '--label', default='')
+    parser.add_argument('-n', '--network', default='nips_cudnn')
+    parser.add_argument('-N', '--name', default='')
     parser.add_argument('-s', '--savepath', default=MOUNT_PATH + '/logs')
     parser.add_argument('--log', default='DEBUG')
     parser.add_argument('-a', '--args', default=None, help='additional args')
@@ -26,7 +26,7 @@ if __name__ == '__main__':
         pass
     
     time_str = time.strftime("%d-%m-%Y-%H-%M-%S", time.gmtime())
-    pre = params.label + '-' if params.label else ''
+    pre = params.name + '-' if params.name else ''
     filename = params.jobdir + '/' + pre + time_str + '.desc'
 
     if os.path.isfile(filename):
@@ -42,10 +42,10 @@ if __name__ == '__main__':
         json.dump({
             "rom": params.rom,
             'network': params.network,
-            'label': pre + time_str,
+            'name': pre + time_str,
             'log': params.log,
             'args': params.args,
             'script': params.script,
-            'id_': datetime.now().microsecond
+            'id_': datetime.now().microsecond,
         }, f)
     
