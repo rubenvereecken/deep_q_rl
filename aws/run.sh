@@ -17,7 +17,7 @@ git checkout $GIT_BRANCH
 
 if [ -z $SAVE_PATH ]; then
   BASE_PATH="$MOUNT_PATH/logs"
-  TIME_STR=`python -c "import time;print time.strftime('%d-%m-%Y-%H-%M-%S', time.gmtime())"`
+  TIME_STR=`python -c "import time;print time.strftime(\'%d-%m-%Y-%H-%M-%S\', time.gmtime())"`
   if [ -z $LABEL ]; then
     SAVE_PATH="$BASE_PATH/$LABEL-$TIME_STR"
   else
