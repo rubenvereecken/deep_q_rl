@@ -174,7 +174,7 @@ def process_args(args, defaults, description):
     parser.add_argument('--save-path', dest='save_path',
                         type=str, default='../logs')
     parser.add_argument('--dont-generate-logdir', dest='generate_logdir',
-            default=False, action='store_true')
+            default=True, action='store_false')
     parser.add_argument('--profile', dest='profile', action='store_true')
     parser.add_argument('--resume', dest='resume', default=False,
             action='store_true', help='Resume from save_path')
@@ -234,7 +234,7 @@ def launch(args, defaults, description):
             parameters.nn_file = network_file_tpl.format(i)
         start_epoch = i + 1
     else:
-        if not parameters.dont_generate_logdir:
+        if parameters.generate_logdir:
             try:
                 # CREATE A FOLDER TO HOLD RESULTS
                 time_str = time.strftime("_%d-%m-%Y-%H-%M-%S", time.gmtime())

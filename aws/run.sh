@@ -7,12 +7,12 @@ MOUNT_PATH=/shared
 # HEARTBEAT_SCRIPT=/shared/heartbeat.py
 # HEARTBEAT_FILE
 GIT_BRANCH=${GIT_BRANCH:-"master"}
-SCRIPT=${SCRIPT:-"run_nips.py"}
+SCRIPT=${SCRIPT:-"./run_nips.py"}
 
 # cp -r $MOUNT_PATH/deep_q_rl /root
 cd /root
 git clone https://github.com/rubenvereecken/deep_q_rl
-cd deep_q_rl
+cd deep_q_rl/aws
 git checkout $GIT_BRANCH
 
 if [ -z $SAVE_PATH ]; then
