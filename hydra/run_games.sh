@@ -1,5 +1,6 @@
 for game in $(dir "../roms")
 do
-  ROM=${game%%.*}
-  ./run_nips.sh $@
+  export ROM=${game%%.*}
+  echo "Starting up $ROM"
+  qsub run_nips.sh $@ -o "$WORKDIR/out-$ROM.txt"
 done
