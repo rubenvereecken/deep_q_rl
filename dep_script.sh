@@ -1,20 +1,21 @@
 #!/bin/bash
+# Assume conda installation
 
 echo "==>dependencies setup for deep_q_rl"
 
 echo "==>updating current package..."
 sudo apt-get update
 
-echo "==>installing OpenCV..."
-sudo apt-get install python-opencv
-
-echo "==>installing Matplotlib..."
-sudo apt-get install python-matplotlib python-tk
+echo "==>Installing bunch of dependencies through conda"
+conda install opencv matplotlib tk numpy ipython nose scipy six
 
 echo "==>installing Theano ..."
 # some dependencies ...
-sudo apt-get install python-numpy python-scipy python-dev python-pip python-nose g++ libopenblas-dev git
-pip install --user --upgrade --no-deps git+git://github.com/Theano/Theano.git
+sudo apt-get install python-dev python-pip g++ libopenblas-dev git
+# pip install --user --upgrade --no-deps git+git://github.com/Theano/Theano.git
+# Should get Theano straight from source
+pip install git+https://github.com/Theano/Theano.git
+pip install git+https://github.com/Lasagne/Lasagne.git
 
 echo "==>installing Lasagne ..."
 pip install --user --upgrade https://github.com/Lasagne/Lasagne/archive/master.zip
@@ -27,7 +28,7 @@ if [ ! -d "./pylearn2" ]
 then
 echo "==>installing Pylearn2 ..."
 # dependencies...
-sudo apt-get install libyaml-0-2 python-six
+sudo apt-get install libyaml-0-2
 git clone git://github.com/lisa-lab/pylearn2
 fi
 cd ./pylearn2
