@@ -38,8 +38,10 @@ if __name__ == '__main__':
             try:
                 i = known_ids.index(desc.id_)
                 qstate = qstates[i]
+                jobname = known_ids[i]
             except ValueError as e:
                 qstate = None
+                jobname = None
 
             try:
                 with open(state_filename, 'r') as f:
@@ -50,10 +52,12 @@ if __name__ == '__main__':
             if qstate == 'qw':
                 pass # QUEUED
             elif qstate == 'r':
+                print '{} still running'.format(jobname)
                 pass # Cool, it's running
             elif state in ['FINISHED', 'CANCELLED']:
                 pass # Alright I guess that's fine too
             else:
+                print '{} appears to have stopped prematurely, restarting'.format(jobname)
                 # Should be running, but it isn't
-                subprocess.Popen(['bash', 'sub.sh', '-N', str(int(time.time())),
+                subprocess.Popen(['bash', 'sub.sh', '-N', jobname,
                     '--save-path', dirname, '--resume'])
