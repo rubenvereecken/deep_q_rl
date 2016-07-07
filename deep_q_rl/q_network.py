@@ -194,6 +194,11 @@ class DeepQLearner:
             return self.build_attempt1_cpu(input_width, input_height,
                                                  output_dim, num_frames,
                                                  batch_size)
+        if network_type == 'attempt1_cudnn':
+            return self.build_attempt1_dnn(input_width, input_height,
+                                                 output_dim, num_frames,
+                                                 batch_size)
+
         else:
             raise ValueError("Unrecognized network: {}".format(network_type))
 
@@ -408,6 +413,13 @@ class DeepQLearner:
                                num_frames, batch_size):
         from lasagne.layers import conv
         conv_layer = conv.Conv2DLayer
+        return self.build_attempt1(input_width, input_height, output_dim,
+                                  num_frames, batch_size, conv_layer)
+
+    def build_attempt1_network_dnn(self, input_width, input_height, output_dim,
+                               num_frames, batch_size):
+        from lasagne.layers import dnn
+        conv_layer = dnn.Conv2DDNNLayer
         return self.build_attempt1(input_width, input_height, output_dim,
                                   num_frames, batch_size, conv_layer)
 
