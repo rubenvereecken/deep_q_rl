@@ -15,6 +15,7 @@ if [ -d "deep_q_rl" ]; then
   cd deep_q_rl
 else
   git clone https://github.com/rubenvereecken/deep_q_rl
+  cp -r $MOUNT_PATH/roms/* deep_q_rl/roms
 fi
 git checkout $GIT_BRANCH
 git pull
