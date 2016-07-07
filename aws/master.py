@@ -12,9 +12,8 @@ def qstat():
     lines = raw.split('\n')[2:]
     lines = map(trim_leading, lines)
     lines = filter(lambda x: len(x) != 0, lines)
-    names = map(lambda l: l[2], lines)
-    states = map(lambda l: l[4], lines)
-    print names, states
+    names = map(lambda l: l.split(' ')[2], lines)
+    states = map(lambda l: l.split(' ')[4], lines)
     return names, states
 
 if __name__ == '__main__':
