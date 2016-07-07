@@ -27,9 +27,11 @@ if __name__ == '__main__':
 
     while True:
         known_ids, qstates = qstat()
+        print known_ids
 
         for dirname in os.listdir(params.watch_dir):
             if not os.path.isdir(dirname): continue
+            print dirname
             with open(dirname + '/job', 'r') as f:
                 job = f.read()
 
@@ -50,14 +52,18 @@ if __name__ == '__main__':
                 state = None
 
             if qstate == 'qw':
+                print '{} still queued'.format(jobname)
                 pass # QUEUED
             elif qstate == 'r':
                 print '{} still running'.format(jobname)
                 pass # Cool, it's running
             elif state in ['FINISHED', 'CANCELLED']:
+                print 'passing {}; {}'.format(jobname, state)
                 pass # Alright I guess that's fine too
             else:
                 print '{} appears to have stopped prematurely, restarting'.format(jobname)
                 # Should be running, but it isn't
                 subprocess.Popen(['bash', 'sub.sh', '-N', jobname,
                     '--save-path', dirname, '--resume'])
+
+        time.sleep(params.interval)

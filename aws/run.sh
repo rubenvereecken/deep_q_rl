@@ -7,7 +7,7 @@ MOUNT_PATH=/shared
 # HEARTBEAT_SCRIPT=/shared/heartbeat.py
 # HEARTBEAT_FILE
 GIT_BRANCH=${GIT_BRANCH:-"master"}
-SCRIPT=${SCRIPT:-"./run_nips.py"}
+SCRIPT=${SCRIPT:-"run_nips.py"}
 
 # cp -r $MOUNT_PATH/deep_q_rl /root
 cd /root
@@ -37,11 +37,16 @@ mkdir -p $SAVE_PATH
 COMMON_PARAMS="--save-path=$SAVE_PATH --dont-generate-logdir"
 echo "Saving to $SAVE_PATH"
 
+if [ -z $JOB_NAME ]; then
+  echo "Could not find JOB_NAME env var"
+  exit -1
+fi
 # python HEARTBEAT_SCRIPT -f HEARTBEAT_FILE &
+echo $JOB_NAME > $SAVE_PATH/job
 
 pwd
 # All defaults will be overwritten by arguments passed to this script
-$SCRIPT $COMMON_PARAMS $@
+./$SCRIPT $COMMON_PARAMS $@
 
 # Finished the heartbeat
 # kill 0
