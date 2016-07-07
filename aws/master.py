@@ -24,14 +24,15 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--interval', default=5, help='in seconds')
     # parser.add_argument('-t', '--timeout', default=5, help='heartbeat timeout')
     params = parser.parse_args(sys.argv[1:])
+    print 'Watching top-level dir {}'.format(params.watch_dir)
 
     while True:
         known_ids, qstates = qstat()
         print known_ids
 
         for dirname in os.listdir(params.watch_dir):
+            dirname = params.watch_dir + '/' + dirname
             if not os.path.isdir(dirname): continue
-            print dirname
             with open(dirname + '/job', 'r') as f:
                 job = f.read()
 
