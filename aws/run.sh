@@ -11,17 +11,23 @@ SCRIPT=${SCRIPT:-"./run_nips.py"}
 
 # cp -r $MOUNT_PATH/deep_q_rl /root
 cd /root
-git clone https://github.com/rubenvereecken/deep_q_rl
-cd deep_q_rl/aws
+if [ -d "deep_q_rl" ]; then
+  cd deep_q_rl
+else
+  git clone https://github.com/rubenvereecken/deep_q_rl
+fi
 git checkout $GIT_BRANCH
+git pull
+cd deep_q_rl/deep_q_rl
 
 if [ -z $SAVE_PATH ]; then
   BASE_PATH="$MOUNT_PATH/logs"
-  TIME_STR=`python -c "import time;print time.strftime(\'%d-%m-%Y-%H-%M-%S\', time.gmtime())"`
+  # TIME_STR=`python -c "import time;print time.strftime(\'%d-%m-%Y-%H-%M-%S\', time.gmtime())"`
+  TIME_STR=`date "+%d-%m-%Y_%H:%M:%S"`
   if [ -z $LABEL ]; then
-    SAVE_PATH="$BASE_PATH/$LABEL-$TIME_STR"
-  else
     SAVE_PATH="$BASE_PATH/$TIME_STR"
+  else
+    SAVE_PATH="$BASE_PATH/$LABEL-$TIME_STR"
   fi
 fi
 
