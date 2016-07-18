@@ -4,6 +4,7 @@ import argparse
 import sys
 import re
 import subprocess
+import logging
 
 def qstat():
     raw = subprocess.check_output(['qstat'])
@@ -21,10 +22,21 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-w', '--watch-dir', dest='watch_dir', default=MOUNT_PATH + '/logs')
+    parser.add_argument('-l', '--log-dir', dest='log_dir', default=MOUNT_PATH + '/logs')
     parser.add_argument('-i', '--interval', default=5, help='in seconds')
     # parser.add_argument('-t', '--timeout', default=5, help='heartbeat timeout')
     params = parser.parse_args(sys.argv[1:])
     print 'Watching top-level dir {}'.format(params.watch_dir)
+
+    log = logging.getLogger()
+    logFormatter = logging.Formatter('%(asctime)s - %(message)s')
+    streamHandler = logging.StreamHandler(sys.stdout)
+    streamHandler.setFormatter(logFormatter)
+    streamHandler.setLevel(logging.DEBUG)
+    fileHandler = logging.FileHandler(params.log_dir + '/master.log')
+    fileHandler.addHandler(fileHandler)
+    fileHandler.setLevel(logging.INFO)
+    log.addHandler(streamHandler)
 
     while True:
         known_ids, qstates = qstat()
