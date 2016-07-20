@@ -42,6 +42,7 @@ if __name__ == '__main__':
     overview_size = (40, 40)
     loss_overview = plt.figure(figsize=overview_size)
     q_overview = plt.figure(figsize=overview_size)
+    reward_overview = plt.figure(figsize=overview_size)
 
     for i, d in enumerate(dirs):
         name = os.path.basename(d)
@@ -55,26 +56,29 @@ if __name__ == '__main__':
         params_filename = os.path.join(d, 'parameters.json')
 
         plot_reward(results, outdir, name, ax)
-        fig.savefig(os.path.join(outdir, 'avg_reward_{}.png'.format(name)))
+        fig.savefig(os.path.join(outdir, '{}_avg_reward.png'.format(name)))
         ax.cla()
         plot_q(results, outdir, name, ax)
-        fig.savefig(os.path.join(outdir, 'avg_q_{}.png'.format(name)))
+        fig.savefig(os.path.join(outdir, '{}_avg_q.png'.format(name)))
         ax.cla()
 
         plot_reward_and_q(results, outdir, name)
 
         plot_loss(learning, outdir, name, ax1)
         plot_q(results, outdir, name, ax2)
-        combo_fig.savefig(os.path.join(outdir, 'combined_{}.png'.format(name)))
+        combo_fig.savefig(os.path.join(outdir, '{}_combined.png'.format(name)))
         ax1.cla()
         ax2.cla()
 
         overview_loss_axis = loss_overview.add_subplot(side, side, i+1)
         overview_q_axis = q_overview.add_subplot(side, side, i+1)
+        overview_reward_axis = reward_overview.add_subplot(side, side, i+1)
 
         # Plot on overview
         plot_loss(learning, outdir, name, overview_loss_axis)
         plot_q(results, outdir, name, overview_q_axis)
+        plot_reward(results, outdir, name, overview_reward_axis)
 
-    loss_overview.savefig(os.path.join(outdir, 'overview_loss.png'))
-    q_overview.savefig(os.path.join(outdir, 'overview_q.png'))
+    loss_overview.savefig(os.path.join(outdir, '__overview_loss.png'))
+    q_overview.savefig(os.path.join(outdir, '__overview_q.png'))
+    reward_overview.savefig(os.path.join(outdir, '__overview_reward.png'))
