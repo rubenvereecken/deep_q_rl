@@ -31,7 +31,7 @@ class DeepQLearner:
                  num_frames, discount, learning_rate, rho,
                  rms_epsilon, momentum, clip_delta, freeze_interval,
                  batch_size, network_type, update_rule,
-                 batch_accumulator, rng, input_scale=255.0):
+                 batch_accumulator, rng, network_params, input_scale=255.0):
 
         self.input_width = input_width
         self.input_height = input_height
@@ -46,6 +46,9 @@ class DeepQLearner:
         self.clip_delta = clip_delta
         self.freeze_interval = freeze_interval
         self.rng = rng
+
+        print('network parameters', network_params)
+        self.network_params = network_params
 
         lasagne.random.set_rng(self.rng)
 
@@ -473,7 +476,7 @@ class DeepQLearner:
 
         l_lstm1 = lasagne.layers.LSTMLayer(
                 l_conv2,
-                num_units=256,
+                num_units=self.network_params.get('network_lstm_layer_size', 256),
                 ingate = default_gate,
                 outgate = default_gate,
                 forgetgate = default_gate,
@@ -483,7 +486,7 @@ class DeepQLearner:
                 backwards=False, #default
                 learn_init=True,
                 peepholes=True, # Internal connection from cell to gates
-                gradient_steps=100, # -1 is entire history 
+                gradient_steps=self.network_params.get('network_lstm_steps', 100), # -1 is entire history 
                 grad_clipping=1, # From alex graves' paper, not sure here
                 precompute_input=True, # Should be a speedup
                 only_return_final=True # Only need output for last frame
