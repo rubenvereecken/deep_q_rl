@@ -179,6 +179,9 @@ def process_args(args, defaults, description):
     parser.add_argument('--resume', dest='resume', default=False,
             action='store_true', help='Resume from save_path')
 
+    parser.add_argument('--network_lstm_layer_size', type=int)
+    parser.add_argument('--network_lstm_steps', type=int)
+
     parameters = parser.parse_args(args)
     if parameters.resume:
         with open(parameters.save_path + '/parameters.json', 'r') as f:
@@ -304,6 +307,9 @@ def launch(args, defaults, description):
 
     num_actions = len(ale.getMinimalActionSet())
 
+    network_params = {k:v for k,v in parameters.__dict__.iteritems() if
+            k.find('network') >= 0}
+
     if parameters.nn_file is None:
         network = q_network.DeepQLearner(defaults.RESIZED_WIDTH,
                                          defaults.RESIZED_HEIGHT,
@@ -320,7 +326,8 @@ def launch(args, defaults, description):
                                          parameters.network_type,
                                          parameters.update_rule,
                                          parameters.batch_accumulator,
-                                         rng)
+                                         rng,
+                                         network_params)
     else:
         handle = open(parameters.nn_file, 'r')
         network = cPickle.load(handle)
