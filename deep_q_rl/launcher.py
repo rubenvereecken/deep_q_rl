@@ -236,6 +236,7 @@ def launch(args, defaults, description):
         else:
             parameters.nn_file = network_file_tpl.format(i)
         start_epoch = i + 1
+        print('Starting epoch {}'.format(start_epoch))
     else:
         if parameters.generate_logdir:
             try:
