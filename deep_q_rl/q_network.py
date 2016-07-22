@@ -187,6 +187,10 @@ class DeepQLearner:
             return self.build_nips_network_dnn(input_width, input_height,
                                                output_dim, num_frames,
                                                batch_size)
+        if network_type == "nips_pool_cudnn":
+            return self.build_nips_with_pooling_network(input_width, input_height,
+                                               output_dim, num_frames,
+                                               batch_size)
         if network_type == "nips_cpu":
             return self.build_nips_network_cpu(input_width, input_height,
                                            output_dim, num_frames, batch_size)
@@ -358,6 +362,58 @@ class DeepQLearner:
         conv_layer = conv.Conv2DLayer
         return self.build_nips_network(input_width, input_height, output_dim,
                                   num_frames, batch_size, conv_layer)
+
+    def build_nips_with_pooling_network_cudnn(self, input_width, input_height, output_dim,
+                           num_frames, batch_size, conv_layer):
+        l_in = lasagne.layers.InputLayer(
+            shape=(None, num_frames, input_width, input_height)
+        )
+
+        l_conv1 = conv_layer(
+            l_in,
+            num_filters=16,
+            filter_size=(8, 8),
+            stride=(4, 4),
+            nonlinearity=lasagne.nonlinearities.rectify,
+            #W=lasagne.init.HeUniform(c01b=True),
+            W=lasagne.init.Normal(.01),
+            b=lasagne.init.Constant(.1)
+            # dimshuffle=True
+        )
+
+        l_conv2 = conv_layer(
+            l_conv1,
+            num_filters=32,
+            filter_size=(4, 4),
+            stride=(2, 2),
+            nonlinearity=lasagne.nonlinearities.rectify,
+            #W=lasagne.init.HeUniform(c01b=True),
+            W=lasagne.init.Normal(.01),
+            b=lasagne.init.Constant(.1)
+            # dimshuffle=True
+        )
+
+        l_pool = lasagne.layers.MaxPool2DLayer(l_conv, pool_size=(2,2))
+
+        l_hidden1 = lasagne.layers.DenseLayer(
+            l_pool,
+            num_units=256,
+            nonlinearity=lasagne.nonlinearities.rectify,
+            #W=lasagne.init.HeUniform(),
+            W=lasagne.init.Normal(.01),
+            b=lasagne.init.Constant(.1)
+        )
+
+        l_out = lasagne.layers.DenseLayer(
+            l_hidden1,
+            num_units=output_dim,
+            nonlinearity=None,
+            #W=lasagne.init.HeUniform(),
+            W=lasagne.init.Normal(.01),
+            b=lasagne.init.Constant(.1)
+        )
+
+        return l_out
 
     def build_nips_network(self, input_width, input_height, output_dim,
                            num_frames, batch_size, conv_layer):
