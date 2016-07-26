@@ -568,12 +568,12 @@ class DeepQLearner:
         l_in = lasagne.layers.InputLayer(
             # Author noted batch_size cannot be None
             # Only 1 channel
-            shape=(None, num_frames, input_width, input_height)
+            shape=(batch_size, num_frames, input_width, input_height)
         )
 
         l_reshape = lasagne.layers.ReshapeLayer(l_in,
                 # Only have one channel, hence the resize, we usually ignore it
-                (batch_size, 1, num_frames, input_width, input_height))
+                (-1, 1, num_frames, input_width, input_height))
 
         l_shuffle = lasagne.layers.DimshuffleLayer(l_reshape, (0, 1, 3, 4, 2))
         print lasagne.layers.get_output_shape(l_shuffle)
