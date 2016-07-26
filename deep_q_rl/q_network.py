@@ -191,6 +191,10 @@ class DeepQLearner:
             return self.build_nips_with_pooling_network_cudnn(input_width, input_height,
                                                output_dim, num_frames,
                                                batch_size)
+        if network_type == "nature_pool_cudnn":
+            return self.build_nature_with_pooling_network(input_width, input_height,
+                                               output_dim, num_frames,
+                                               batch_size)
         if network_type == "nips_cpu":
             return self.build_nips_network_cpu(input_width, input_height,
                                            output_dim, num_frames, batch_size)
@@ -363,6 +367,65 @@ class DeepQLearner:
         return self.build_nips_network(input_width, input_height, output_dim,
                                   num_frames, batch_size, conv_layer)
 
+    def build_nature_with_pooling_network_cudnn(self, input_width, input_height, output_dim,
+                             num_frames, batch_size, conv_layer):
+        """
+        Build a large network consistent with the DeepMind Nature paper.
+        """
+        l_in = lasagne.layers.InputLayer(
+            shape=(batch_size, num_frames, input_width, input_height)
+        )
+
+        l_conv1 = conv_layer(
+            l_in,
+            num_filters=32,
+            filter_size=(8, 8),
+            stride=(4, 4),
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.HeUniform(), # Defaults to Glorot
+            b=lasagne.init.Constant(.1)
+        )
+
+        l_conv2 = conv_layer(
+            l_conv1,
+            num_filters=64,
+            filter_size=(4, 4),
+            stride=(2, 2),
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.HeUniform(),
+            b=lasagne.init.Constant(.1)
+        )
+
+        l_conv3 = conv_layer(
+            l_conv2,
+            num_filters=64,
+            filter_size=(3, 3),
+            stride=(1, 1),
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.HeUniform(),
+            b=lasagne.init.Constant(.1)
+        )
+
+        l_pool = lasagne.layers.MaxPool2DLayer(l_conv3, pool_size=(2,2))
+
+        l_hidden1 = lasagne.layers.DenseLayer(
+            l_pool,
+            num_units=512,
+            nonlinearity=lasagne.nonlinearities.rectify,
+            W=lasagne.init.HeUniform(),
+            b=lasagne.init.Constant(.1)
+        )
+
+        l_out = lasagne.layers.DenseLayer(
+            l_hidden1,
+            num_units=output_dim,
+            nonlinearity=None,
+            W=lasagne.init.HeUniform(),
+            b=lasagne.init.Constant(.1)
+        )
+
+        return l_out
+
     def build_nips_with_pooling_network_cudnn(self, input_width, input_height, output_dim,
                                num_frames, batch_size):
         from lasagne.layers import dnn
@@ -489,7 +552,7 @@ class DeepQLearner:
         return self.build_attempt1(input_width, input_height, output_dim,
                                   num_frames, batch_size, conv_layer)
 
-    def build_attempt1(self, input_width, input_height, output_dim,
+    def build_lstm_networks(self, input_width, input_height, output_dim,
                            num_frames, batch_size, conv_layer):
         l_in = lasagne.layers.InputLayer(
             # Batch size is undefined so we can chuck in as many as we please
@@ -544,13 +607,16 @@ class DeepQLearner:
                 outgate = default_gate,
                 forgetgate = default_gate,
                 cell = default_gate,
-                # https://github.com/Lasagne/Lasagne/blob/290379e01e74c842aab5b91d4d46a6a207245684/lasagne/layers/recurrent.py#L1033
+                # DRQ Paper says adding a ReLU after LSTM sucked,
+                # Not sure if they meant as activation function or on top of it
                 nonlinearity=lasagne.nonlinearities.rectify,
                 backwards=False, #default
                 learn_init=True,
                 peepholes=True, # Internal connection from cell to gates
                 gradient_steps=self.network_params.get('network_lstm_steps', 100), # -1 is entire history 
-                grad_clipping=1, # From alex graves' paper, not sure here
+                # grad_clipping=1, # From alex graves' paper, not sure here
+                # This value comes from the other LSTM paper
+                grad_clipping=self.network_params.get('network_grad_clipping', 10),
                 precompute_input=True, # Should be a speedup
                 only_return_final=True # Only need output for last frame
                 )

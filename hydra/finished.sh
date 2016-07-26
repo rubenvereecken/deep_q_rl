@@ -8,7 +8,10 @@ for dir in $dirs; do
   if [[ ! -a "$dir/state" ]]; then
     continue
   fi
-  finished_dirs="$finished_dirs $WORKDIR/$dir"
+  STATE="$(cat $dir/state)"
+  if [ "$STATE" != "RUNNING" ]; then
+    finished_dirs="$finished_dirs $WORKDIR/$dir"
+  fi
 done
 
 echo $finished_dirs

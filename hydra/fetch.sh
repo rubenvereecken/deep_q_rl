@@ -13,5 +13,6 @@ for dir in $finished_dirs; do
   dirs="$dirs:${dir%/} "
 done
 
+mkdir -p $LOG_DIR
 cd $LOG_DIR
 rsync -avz -e ssh $SSH_STRING$dirs . --progress --exclude "*network_file*" --exclude "state"

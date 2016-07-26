@@ -88,6 +88,29 @@ class DataSet(object):
         phi[-1] = img
         return phi
 
+    def random_sequential_batch(self, batch_size):
+        """
+        Pick a random episode, then take #batch_size sequential frames
+        or until episode end
+        """
+
+        index = 0
+        while True:
+            index = self.rng.randint(self.bottom,
+                                     self.bottom + self.size - self.phi_length)
+            if not self.terminal[index]:
+                break
+
+        end_index = index
+        while not self.terminal.take(end_index + 1, mode='wrap'):
+            end_index += 1
+
+        # Calculate sequence size
+        # Allocate and fill arrays
+
+
+
+
     def random_batch(self, batch_size):
         """Return corresponding states, actions, rewards, terminal status, and
 next_states for batch_size randomly chosen state transitions.
