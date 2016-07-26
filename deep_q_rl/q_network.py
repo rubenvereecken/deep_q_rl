@@ -210,6 +210,11 @@ class DeepQLearner:
                                                  output_dim, num_frames,
                                                  batch_size)
 
+        if network_type == 'conv3d':
+            return self.build_conv3d(input_width, input_height,
+                                                 output_dim, num_frames,
+                                                 batch_size or self.batch_size)
+
         else:
             raise ValueError("Unrecognized network: {}".format(network_type))
 
@@ -558,6 +563,80 @@ class DeepQLearner:
         conv_layer = dnn.Conv2DDNNLayer
         return self.build_attempt1(input_width, input_height, output_dim,
                                   num_frames, batch_size, conv_layer)
+
+    def build_conv3d(self, input_width, input_height, output_dim, num_frames, batch_size):
+        l_in = lasagne.layers.InputLayer(
+            # Author noted batch_size cannot be None
+            # Only 1 channel
+            shape=(batch_size, num_frames, input_width, input_height)
+        )
+
+        l_reshape = lasagne.layers.ReshapeLayer(l_in,
+                # Only have one channel, hence the resize, we usually ignore it
+                (batch_size, 1, num_frames, input_width, input_height))
+
+        from lasagne.layers import conv
+        conv_layer = conv.Conv3DLayer
+
+        l_conv1 = conv_layer(
+            l_reshape,
+            num_filters=16,
+            # Vary the temporal filter
+            filter_size=(self.network_params.get('network_temp_filter_1', 3), 8, 8),
+            # Max supported stride is 1
+            stride=(1, 1, 1),
+            nonlinearity=lasagne.nonlinearities.rectify,
+            # W=lasagne.init.Normal(.01),
+            # b=lasagne.init.Constant(.1)
+            # dimshuffle=True
+        )
+
+        shape = lasagne.layers.get_output_shape(l_conv1)
+        # print shape
+
+        l_conv2 = conv_layer(
+            l_conv1,
+            num_filters=32,
+            # Vary the temporal filter
+            filter_size=(self.network_params.get('network_temp_filter_2', 2), 4, 4),
+            # Max supported stride is 1
+            stride=(1, 1, 1),
+            nonlinearity=lasagne.nonlinearities.rectify,
+            #W=lasagne.init.HeUniform(c01b=True),
+            # W=lasagne.init.Normal(.01),
+            # b=lasagne.init.Constant(.1)
+            # dimshuffle=True
+        )
+        previous_layer = l_conv2
+        # print lasagne.layers.get_output_shape(l_conv2)
+
+        # pool_size = self.network_params.get('network_final_pooling_size')
+        # if pool_size:
+        #     print('Using an additional max pool layer of size', pool_size)
+
+        #     previous_layer = lasagne.layers.pool.Pool3Layer(l_conv2,
+        #             pool_size=pool_size)
+
+        l_hidden1 = lasagne.layers.DenseLayer(
+            previous_layer,
+            num_units=256,
+            nonlinearity=lasagne.nonlinearities.rectify,
+            #W=lasagne.init.HeUniform(),
+            W=lasagne.init.Normal(.01),
+            b=lasagne.init.Constant(.1)
+        )
+
+        l_out = lasagne.layers.DenseLayer(
+            l_hidden1,
+            num_units=output_dim,
+            nonlinearity=None,
+            #W=lasagne.init.HeUniform(),
+            W=lasagne.init.Normal(.01),
+            b=lasagne.init.Constant(.1)
+        )
+
+        return l_out
+
 
     def build_lstm_networks(self, input_width, input_height, output_dim,
                            num_frames, batch_size, conv_layer):
