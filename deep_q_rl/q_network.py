@@ -575,20 +575,20 @@ class DeepQLearner:
                 # Only have one channel, hence the resize, we usually ignore it
                 (batch_size, 1, num_frames, input_width, input_height))
 
-        from lasagne.layers import conv
-        conv_layer = conv.Conv3DLayer
+        l_shuffle = lasagne.layers.DimshuffleLayer(l_reshape, (0, 1, 3, 4, 2))
+
+        from lasagne.layers import dnn
+        conv_layer = dnn.Conv3DDNNLayer
 
         l_conv1 = conv_layer(
-            l_reshape,
+            l_shuffle,
             num_filters=16,
             # Vary the temporal filter
-            filter_size=(self.network_params.get('network_temp_filter_1', 3), 8, 8),
-            # Max supported stride is 1
-            stride=(1, 1, 1),
+            filter_size=(8, 8, self.network_params.get('network_temp_filter_1', 3)),
+            stride=(4, 4, 1),
             nonlinearity=lasagne.nonlinearities.rectify,
-            # W=lasagne.init.Normal(.01),
-            # b=lasagne.init.Constant(.1)
-            # dimshuffle=True
+            W=lasagne.init.Normal(.01),
+            b=lasagne.init.Constant(.1)
         )
 
         shape = lasagne.layers.get_output_shape(l_conv1)
@@ -598,14 +598,12 @@ class DeepQLearner:
             l_conv1,
             num_filters=32,
             # Vary the temporal filter
-            filter_size=(self.network_params.get('network_temp_filter_2', 2), 4, 4),
-            # Max supported stride is 1
-            stride=(1, 1, 1),
+            filter_size=(4, 4, self.network_params.get('network_temp_filter_2', 2)),
+            stride=(2, 2, 1),
             nonlinearity=lasagne.nonlinearities.rectify,
             #W=lasagne.init.HeUniform(c01b=True),
-            # W=lasagne.init.Normal(.01),
-            # b=lasagne.init.Constant(.1)
-            # dimshuffle=True
+            W=lasagne.init.Normal(.01),
+            b=lasagne.init.Constant(.1)
         )
         previous_layer = l_conv2
         # print lasagne.layers.get_output_shape(l_conv2)
