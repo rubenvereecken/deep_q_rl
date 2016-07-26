@@ -1,6 +1,8 @@
+#!/bin/bash
 REPS=5
-for i in {1..$REPS}
+for i in {1..5}
 do
+  echo $i
   export REP=$i
   $@
 done

@@ -1,6 +1,6 @@
-for game in $(dir "../roms")
+for game in $(dir "roms")
 do
   export ROM=${game%%.*}
   echo "Starting up $ROM"
-  qsub run_nips.sh $@ -o "$WORKDIR/out-$ROM.txt"
+  qsub hydra/run_cpu.sh $@ -V -N "$PREFIX-$ROM"
 done

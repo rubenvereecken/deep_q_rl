@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#PBS -l nodes=1:ppn=4:intel
+#PBS -l nodes=1:ppn=4:ivybridge
 #PBS -l mem=15gb
 #PBS -l walltime=300:00:00
 #PBS -M rvereeck@vub.ac.be
@@ -25,13 +25,15 @@ echo "Saving to $SAVE_PATH"
 
 ROM=${ROM:="space_invaders"}
 
-PARAMS="--save-path=$SAVE_PATH -r ${ROM} --log_level=DEBUG --dont-generate-logdir"
+PARAMS="--save-path=$SAVE_PATH -r ${ROM} --log_level=DEBUG --dont-generate-logdir --deterministic=False"
 if [ ! -z $NETWORK_TYPE ]; then
   PARAMS="$PARAMS --network-type=$NETWORK_TYPE"
 fi
 
 echo "Running ${ROM} with ${NETWORK_TYPE} on $HOST - " `date`
 echo "RUNNING" > $SAVE_PATH/state
+
+trap "echo INTERRUPTED > $SAVE_PATH/state" INT TERM
 
 # All defaults will be overwritten by arguments passed to this script
 export THEANO_FLAGS='device=cpu,allow_gc=True,openmp=True,openmp_elemwise_minsize=200000'
