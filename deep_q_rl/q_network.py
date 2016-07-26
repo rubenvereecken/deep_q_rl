@@ -188,7 +188,7 @@ class DeepQLearner:
                                                output_dim, num_frames,
                                                batch_size)
         if network_type == "nips_pool_cudnn":
-            return self.build_nips_with_pooling_network(input_width, input_height,
+            return self.build_nips_with_pooling_network_cudnn(input_width, input_height,
                                                output_dim, num_frames,
                                                batch_size)
         if network_type == "nips_cpu":
@@ -364,6 +364,13 @@ class DeepQLearner:
                                   num_frames, batch_size, conv_layer)
 
     def build_nips_with_pooling_network_cudnn(self, input_width, input_height, output_dim,
+                               num_frames, batch_size):
+        from lasagne.layers import dnn
+        conv_layer = dnn.Conv2DDNNLayer
+        return self.build_nips_with_pooling_network(input_width, input_height, output_dim,
+                                  num_frames, batch_size, conv_layer)
+
+    def build_nips_with_pooling_network(self, input_width, input_height, output_dim,
                            num_frames, batch_size, conv_layer):
         l_in = lasagne.layers.InputLayer(
             shape=(None, num_frames, input_width, input_height)
@@ -393,7 +400,7 @@ class DeepQLearner:
             # dimshuffle=True
         )
 
-        l_pool = lasagne.layers.MaxPool2DLayer(l_conv, pool_size=(2,2))
+        l_pool = lasagne.layers.MaxPool2DLayer(l_conv2, pool_size=(2,2))
 
         l_hidden1 = lasagne.layers.DenseLayer(
             l_pool,
