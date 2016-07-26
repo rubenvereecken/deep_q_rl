@@ -575,9 +575,6 @@ class DeepQLearner:
                 # Only have one channel, hence the resize, we usually ignore it
                 (-1, 1, num_frames, input_width, input_height))
 
-        l_shuffle = lasagne.layers.DimshuffleLayer(l_reshape, (0, 1, 3, 4, 2))
-        print lasagne.layers.get_output_shape(l_shuffle)
-
         from lasagne.layers import dnn
         conv_layer = dnn.Conv3DDNNLayer
 
@@ -585,40 +582,35 @@ class DeepQLearner:
             l_reshape,
             num_filters=16,
             # Vary the temporal filter
-            # filter_size=(3, 8, 8), #self.network_params.get('network_temp_filter_1', 3)),
-            filter_size=(3,3,3),
-            # stride=(1, 4, 4),
-            stride=(2,2,2),
-            pad=1,
+            filter_size=(self.network_params.get('network_temp_filter_1', 3), 8, 8),
+            stride=(1, 4, 4),
             nonlinearity=lasagne.nonlinearities.rectify,
-            # W=lasagne.init.Normal(.01),
-            # b=lasagne.init.Constant(.1)
+            W=lasagne.init.Normal(.01),
+            b=lasagne.init.Constant(.1)
         )
 
-        shape = lasagne.layers.get_output_shape(l_conv1)
+        # shape = lasagne.layers.get_output_shape(l_conv1)
         # print shape
 
         l_conv2 = conv_layer(
             l_conv1,
             num_filters=32,
             # Vary the temporal filter
-            filter_size=(4, 4, self.network_params.get('network_temp_filter_2', 2)),
-            stride=(2, 2, 1),
-            pad='valid',
+            filter_size=(self.network_params.get('network_temp_filter_2', 2), 4, 4),
+            stride=(1, 2, 2),
             nonlinearity=lasagne.nonlinearities.rectify,
-            #W=lasagne.init.HeUniform(c01b=True),
-            # W=lasagne.init.Normal(.01),
-            # b=lasagne.init.Constant(.1)
+            W=lasagne.init.Normal(.01),
+            b=lasagne.init.Constant(.1)
         )
-        previous_layer = l_conv1
+        previous_layer = l_conv2
         # print lasagne.layers.get_output_shape(l_conv2)
 
-        # pool_size = self.network_params.get('network_final_pooling_size')
-        # if pool_size:
-        #     print('Using an additional max pool layer of size', pool_size)
+        pool_size = self.network_params.get('network_final_pooling_size', None)
+        if pool_size:
+            print('Using an additional max pool layer of size', pool_size)
 
-        #     previous_layer = lasagne.layers.pool.Pool3Layer(l_conv2,
-        #             pool_size=pool_size)
+            previous_layer = lasagne.layers.dnn.Pool3DDNNLayer(l_conv2,
+                    pool_size=pool_size)
 
         l_hidden1 = lasagne.layers.DenseLayer(
             previous_layer,
