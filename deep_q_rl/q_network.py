@@ -192,7 +192,7 @@ class DeepQLearner:
                                                output_dim, num_frames,
                                                batch_size)
         if network_type == "nature_pool_cudnn":
-            return self.build_nature_with_pooling_network(input_width, input_height,
+            return self.build_nature_with_pooling_network_cudnn(input_width, input_height,
                                                output_dim, num_frames,
                                                batch_size)
         if network_type == "nips_cpu":
