@@ -90,7 +90,7 @@ class DeepQLearner:
             broadcastable=(False, True))
 
         q_vals = lasagne.layers.get_output(self.l_out, states / input_scale)
-        
+
         if self.freeze_interval > 0:
             next_q_vals = lasagne.layers.get_output(self.next_l_out,
                                                     next_states / input_scale)
@@ -111,7 +111,7 @@ class DeepQLearner:
             # the clip bounds. To avoid this, we extend the loss
             # linearly past the clip point to keep the gradient constant
             # in that regime.
-            # 
+            #
             # This is equivalent to declaring d loss/d q_vals to be
             # equal to the clipped diff, then backpropagating from
             # there, which is what the DeepMind implementation does.
@@ -128,7 +128,7 @@ class DeepQLearner:
         else:
             raise ValueError("Bad accumulator: {}".format(batch_accumulator))
 
-        params = lasagne.layers.helper.get_all_params(self.l_out)  
+        params = lasagne.layers.helper.get_all_params(self.l_out)
         givens = {
             states: self.states_shared,
             next_states: self.next_states_shared,
@@ -170,7 +170,7 @@ class DeepQLearner:
         if network_type == "nature_cuda":
             return self.build_nature_network_cuda(input_width, input_height,
                                              output_dim, num_frames, batch_size)
-        # Requires cuDNN which is not freely available. 
+        # Requires cuDNN which is not freely available.
         if network_type == "nature_cudnn":
             return self.build_nature_network_dnn(input_width, input_height,
                                                  output_dim, num_frames,
@@ -182,7 +182,7 @@ class DeepQLearner:
         if network_type == "nips_cuda":
             return self.build_nips_network_cuda(input_width, input_height,
                                            output_dim, num_frames, batch_size)
-        # Requires cuDNN which is not freely available. 
+        # Requires cuDNN which is not freely available.
         if network_type == "nips_cudnn":
             return self.build_nips_network_dnn(input_width, input_height,
                                                output_dim, num_frames,
@@ -213,7 +213,7 @@ class DeepQLearner:
         if network_type == 'conv3d':
             return self.build_conv3d(input_width, input_height,
                                                  output_dim, num_frames,
-                                                 batch_size or self.batch_size)
+                                                 batch_size)
 
         else:
             raise ValueError("Unrecognized network: {}".format(network_type))
@@ -285,7 +285,7 @@ class DeepQLearner:
 
     def build_nature_network_cpu(self, input_width, input_height, output_dim,
                                  num_frames, batch_size):
-        from lasagne.layers import conv 
+        from lasagne.layers import conv
         conv_layer = conv.Conv2DLayer
         return self.build_nature_network(input_width, input_height, output_dim,
                                     num_frames, batch_size, conv_layer)
@@ -568,12 +568,12 @@ class DeepQLearner:
         l_in = lasagne.layers.InputLayer(
             # Author noted batch_size cannot be None
             # Only 1 channel
-            shape=(None, num_frames, input_width, input_height)
+            shape=(batch_size, num_frames, input_width, input_height)
         )
 
         l_reshape = lasagne.layers.ReshapeLayer(l_in,
                 # Only have one channel, hence the resize, we usually ignore it
-                (batch_size, 1, num_frames, input_width, input_height))
+                (-1, 1, num_frames, input_width, input_height))
 
         l_shuffle = lasagne.layers.DimshuffleLayer(l_reshape, (0, 1, 3, 4, 2))
         print lasagne.layers.get_output_shape(l_shuffle)
@@ -702,7 +702,7 @@ class DeepQLearner:
                 backwards=False, #default
                 learn_init=True,
                 peepholes=True, # Internal connection from cell to gates
-                gradient_steps=self.network_params.get('network_lstm_steps', 100), # -1 is entire history 
+                gradient_steps=self.network_params.get('network_lstm_steps', 100), # -1 is entire history
                 # grad_clipping=1, # From alex graves' paper, not sure here
                 # This value comes from the other LSTM paper
                 grad_clipping=self.network_params.get('network_grad_clipping', 10),
