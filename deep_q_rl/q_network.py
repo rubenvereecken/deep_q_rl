@@ -568,7 +568,7 @@ class DeepQLearner:
         l_in = lasagne.layers.InputLayer(
             # Author noted batch_size cannot be None
             # Only 1 channel
-            shape=(batch_size, num_frames, input_width, input_height)
+            shape=(None, num_frames, input_width, input_height)
         )
 
         l_reshape = lasagne.layers.ReshapeLayer(l_in,
@@ -576,17 +576,20 @@ class DeepQLearner:
                 (batch_size, 1, num_frames, input_width, input_height))
 
         l_shuffle = lasagne.layers.DimshuffleLayer(l_reshape, (0, 1, 3, 4, 2))
+        print lasagne.layers.get_output_shape(l_shuffle)
 
         from lasagne.layers import dnn
         conv_layer = dnn.Conv3DDNNLayer
 
         l_conv1 = conv_layer(
-            l_shuffle,
+            l_reshape,
             num_filters=16,
             # Vary the temporal filter
-            filter_size=(8, 8, self.network_params.get('network_temp_filter_1', 3)),
-            stride=(4, 4, 1),
-            pad='valid',
+            # filter_size=(3, 8, 8), #self.network_params.get('network_temp_filter_1', 3)),
+            filter_size=(3,3,3),
+            # stride=(1, 4, 4),
+            stride=(2,2,2),
+            pad=1,
             nonlinearity=lasagne.nonlinearities.rectify,
             # W=lasagne.init.Normal(.01),
             # b=lasagne.init.Constant(.1)
