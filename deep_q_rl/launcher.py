@@ -34,7 +34,7 @@ def save_parameters(args, save_path):
 
 # hackity hack
 class Struct:
-    def __init__(self, **entries): 
+    def __init__(self, **entries):
         self.__dict__.update(entries)
 
 def process_args(args, defaults, description):
@@ -181,6 +181,9 @@ def process_args(args, defaults, description):
 
     parser.add_argument('--network_lstm_layer_size', type=int)
     parser.add_argument('--network_lstm_steps', type=int)
+    parser.add_argument('--network_temp_filter1', type=int)
+    parser.add_argument('--network_temp_filter2', type=int)
+    parser.add_argument('--network_final_pooling_size', type=int)
 
     parameters = parser.parse_args(args)
     if parameters.resume:
@@ -207,7 +210,7 @@ def process_args(args, defaults, description):
     # code. The paper states that the target network update frequency is
     # "measured in the number of parameter updates". In the code it is actually
     # measured in the number of action choices.
-    # The default still has the same result as DeepMind's code, only the result 
+    # The default still has the same result as DeepMind's code, only the result
     # is achieved like DeepMind's paper describes it.
     parameters.freeze_interval = (parameters.freeze_interval //
                                   parameters.update_frequency)
@@ -242,7 +245,7 @@ def launch(args, defaults, description):
             try:
                 # CREATE A FOLDER TO HOLD RESULTS
                 time_str = time.strftime("_%d-%m-%Y-%H-%M-%S", time.gmtime())
-                save_path = parameters.save_path + '/' + parameters.experiment_prefix + time_str 
+                save_path = parameters.save_path + '/' + parameters.experiment_prefix + time_str
                 os.makedirs(save_path)
             except OSError as ex:
                 # Directory most likely already exists
@@ -290,7 +293,7 @@ def launch(args, defaults, description):
     ale = ale_python_interface.ALEInterface()
     ale.setInt('random_seed', rng.randint(1000))
 
-    # TODO make it display 
+    # TODO make it display
     if parameters.display_screen:
         import sys
         if sys.platform == 'darwin':
@@ -340,7 +343,7 @@ def launch(args, defaults, description):
                                   parameters.replay_memory_size,
                                   parameters.replay_start_size,
                                   parameters.update_frequency,
-                                  rng, save_path, 
+                                  rng, save_path,
                                   parameters.profile)
 
     experiment = ale_experiment.ALEExperiment(ale, agent,
