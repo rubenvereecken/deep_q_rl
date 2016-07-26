@@ -582,7 +582,7 @@ class DeepQLearner:
             l_reshape,
             num_filters=16,
             # Vary the temporal filter
-            filter_size=(self.network_params.get('network_temp_filter_1', 3), 8, 8),
+            filter_size=(self.network_params.get('network_temp_filter1', 3), 8, 8),
             stride=(1, 4, 4),
             nonlinearity=lasagne.nonlinearities.rectify,
             W=lasagne.init.Normal(.01),
@@ -596,7 +596,7 @@ class DeepQLearner:
             l_conv1,
             num_filters=32,
             # Vary the temporal filter
-            filter_size=(self.network_params.get('network_temp_filter_2', 2), 4, 4),
+            filter_size=(self.network_params.get('network_temp_filter2', 2), 4, 4),
             stride=(1, 2, 2),
             nonlinearity=lasagne.nonlinearities.rectify,
             W=lasagne.init.Normal(.01),
