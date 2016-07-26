@@ -368,6 +368,13 @@ class DeepQLearner:
                                   num_frames, batch_size, conv_layer)
 
     def build_nature_with_pooling_network_cudnn(self, input_width, input_height, output_dim,
+                               num_frames, batch_size):
+        from lasagne.layers import dnn
+        conv_layer = dnn.Conv2DDNNLayer
+        return self.build_nature_with_pooling_network(input_width, input_height, output_dim,
+                                  num_frames, batch_size, conv_layer)
+
+    def build_nature_with_pooling_network(self, input_width, input_height, output_dim,
                              num_frames, batch_size, conv_layer):
         """
         Build a large network consistent with the DeepMind Nature paper.
