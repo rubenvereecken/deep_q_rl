@@ -586,9 +586,10 @@ class DeepQLearner:
             # Vary the temporal filter
             filter_size=(8, 8, self.network_params.get('network_temp_filter_1', 3)),
             stride=(4, 4, 1),
+            pad='valid',
             nonlinearity=lasagne.nonlinearities.rectify,
-            W=lasagne.init.Normal(.01),
-            b=lasagne.init.Constant(.1)
+            # W=lasagne.init.Normal(.01),
+            # b=lasagne.init.Constant(.1)
         )
 
         shape = lasagne.layers.get_output_shape(l_conv1)
@@ -600,12 +601,13 @@ class DeepQLearner:
             # Vary the temporal filter
             filter_size=(4, 4, self.network_params.get('network_temp_filter_2', 2)),
             stride=(2, 2, 1),
+            pad='valid',
             nonlinearity=lasagne.nonlinearities.rectify,
             #W=lasagne.init.HeUniform(c01b=True),
-            W=lasagne.init.Normal(.01),
-            b=lasagne.init.Constant(.1)
+            # W=lasagne.init.Normal(.01),
+            # b=lasagne.init.Constant(.1)
         )
-        previous_layer = l_conv2
+        previous_layer = l_conv1
         # print lasagne.layers.get_output_shape(l_conv2)
 
         # pool_size = self.network_params.get('network_final_pooling_size')
