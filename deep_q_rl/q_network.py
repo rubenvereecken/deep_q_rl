@@ -589,8 +589,7 @@ class DeepQLearner:
             b=lasagne.init.Constant(.1)
         )
 
-        # shape = lasagne.layers.get_output_shape(l_conv1)
-        # print shape
+        print lasagne.layers.get_output_shape(l_conv1)
 
         l_conv2 = conv_layer(
             l_conv1,
@@ -602,15 +601,18 @@ class DeepQLearner:
             W=lasagne.init.Normal(.01),
             b=lasagne.init.Constant(.1)
         )
+
         previous_layer = l_conv2
-        # print lasagne.layers.get_output_shape(l_conv2)
+        print lasagne.layers.get_output_shape(l_conv2)
 
         pool_size = self.network_params.get('network_final_pooling_size', None)
         if pool_size:
-            print('Using an additional max pool layer of size', pool_size)
+            print 'Using an additional max pool layer of size', pool_size
 
             previous_layer = lasagne.layers.dnn.Pool3DDNNLayer(l_conv2,
                     pool_size=pool_size)
+
+        print lasagne.layers.get_output_shape(previous_layer)
 
         l_hidden1 = lasagne.layers.DenseLayer(
             previous_layer,
