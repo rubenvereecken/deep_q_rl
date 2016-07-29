@@ -361,7 +361,7 @@ class DeepQLearner:
         # Only makes sense with at least two time frames, pref more
         previous = [
             lasagne.layers.SliceLayer(l_in, indices=slice(0, 1), axis=1),
-            # lasagne.layers.SliceLayer(l_in, indices=slice(-1, None), axis=1),
+            lasagne.layers.SliceLayer(l_in, indices=slice(-1, None), axis=1),
         ]
 
         print lasagne.layers.get_output_shape(previous[0])
