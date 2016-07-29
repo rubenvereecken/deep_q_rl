@@ -100,7 +100,7 @@ class DataSet(object):
         while True:
             index = self.rng.randint(self.bottom,
                                      self.bottom + self.size - self.phi_length)
-            if not self.terminal[index]:
+            if not self.terminal.take(index, axis=0, mode='wrap'):
                 break
 
         end_index = index + 1
