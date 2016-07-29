@@ -19,7 +19,7 @@ class RecurrentAgent(NeuralAgent):
         super(RecurrentAgent, self).__init__(
                  q_network, epsilon_start, epsilon_min,
                  epsilon_decay, replay_memory_size, replay_start_size,
-                 update_frequency, rng, save_path, profile
+                 update_frequency, rng, save_path, profile, network_params
                 )
         self.network_params = network_params
         logging.debug('Initialized Recurrent Agent')
