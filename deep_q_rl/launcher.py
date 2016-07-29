@@ -15,7 +15,6 @@ import theano
 import simplejson as json
 
 import ale_experiment
-import ale_agent
 import q_network
 import profile
 
@@ -181,9 +180,12 @@ def process_args(args, defaults, description):
 
     parser.add_argument('--network_lstm_layer_size', type=int)
     parser.add_argument('--network_lstm_steps', type=int)
+    parser.add_argument('--network_lstm_grad_clipping', type=int)
     parser.add_argument('--network_temp_filter1', type=int)
     parser.add_argument('--network_temp_filter2', type=int)
     parser.add_argument('--network_final_pooling_size', type=int)
+    parser.add_argument('--network_lstm_reset_on_start', type=bool, default=True)
+    parser.add_argument('--network_lstm_reset_on_training', type=bool, default=True)
 
     parameters = parser.parse_args(args)
     if parameters.resume:
@@ -205,6 +207,11 @@ def process_args(args, defaults, description):
         parameters.death_ends_episode = False
     else:
         raise ValueError("--death-ends-episode must be true or false")
+
+    # If some kind of recurrent network
+    if parameters.network_type.find('lstm') >= 0:
+        print parameters.phi_length
+        # parameters.phi_length = 1
 
     # This addresses an inconsistency between the Nature paper and the Deepmind
     # code. The paper states that the target network update frequency is
@@ -336,7 +343,14 @@ def launch(args, defaults, description):
         handle = open(parameters.nn_file, 'r')
         network = cPickle.load(handle)
 
-    agent = ale_agent.NeuralAgent(network,
+    if parameters.network_type.find('lstm') >= 0:
+        import recurrent_agent
+        agent_class = recurrent_agent.RecurrentAgent
+    else:
+        import ale_agent
+        agent_class = ale_agent.NeuralAgent
+
+    agent = agent_class(network,
                                   parameters.epsilon_start,
                                   parameters.epsilon_min,
                                   parameters.epsilon_decay,
@@ -344,7 +358,8 @@ def launch(args, defaults, description):
                                   parameters.replay_start_size,
                                   parameters.update_frequency,
                                   rng, save_path,
-                                  parameters.profile)
+                                  parameters.profile,
+                                  network_params)
 
     experiment = ale_experiment.ALEExperiment(ale, agent,
                                               defaults.RESIZED_WIDTH,

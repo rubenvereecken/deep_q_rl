@@ -21,7 +21,7 @@ sys.setrecursionlimit(10000)
 class NeuralAgent(object):
 
     def __init__(self, q_network, epsilon_start, epsilon_min,
-                 epsilon_decay, replay_memory_size, replay_start_size, 
+                 epsilon_decay, replay_memory_size, replay_start_size,
                  update_frequency, rng, save_path, profile):
 
         self.network = q_network
@@ -103,7 +103,7 @@ class NeuralAgent(object):
         self.results_file.flush()
 
     def _update_learning_file(self, epoch):
-        out = "{},{},{},{}\n".format(epoch, self.episode_counter, 
+        out = "{},{},{},{}\n".format(epoch, self.episode_counter,
                 np.mean(self.loss_averages), self.epsilon)
         self.learning_file.write(out)
         self.learning_file.flush()
@@ -287,7 +287,6 @@ class NeuralAgent(object):
         self.testing = False
         holdout_size = 3200
 
-        # TODO check out holdout size in original code
         # Keep a random subset of transitions to evaluate performance over time
         if self.holdout_data is None and len(self.data_set) > holdout_size:
             self.holdout_data = self.data_set.random_batch(holdout_size)[0]
