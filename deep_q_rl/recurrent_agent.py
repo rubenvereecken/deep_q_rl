@@ -30,10 +30,10 @@ class RecurrentAgent(NeuralAgent):
 
         # Reset LSTM state, I think we should start anew each episode
         if self.network_params['network_lstm_reset_on_start']:
-            self.network.lstm.hid.set_value(np.zeros_like(self.network.lstm.hid,
-                dtype=theano.config.floatX))
-            self.network.lstm.cell.set_value(np.zeros_like(self.network.lstm.cell,
-                dtype=theano.config.floatX))
+            self.network.lstm.hid.set_value(np.zeros((1,
+                self.network_params['network_lstm_layer_size']), dtype=theano.config.floatX))
+            self.network.lstm.cell.set_value(np.zeros((1,
+                self.network_params['network_lstm_layer_size']), dtype=theano.config.floatX))
 
         return action
 

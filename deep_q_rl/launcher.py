@@ -178,7 +178,7 @@ def process_args(args, defaults, description):
     parser.add_argument('--resume', dest='resume', default=False,
             action='store_true', help='Resume from save_path')
 
-    parser.add_argument('--network_lstm_layer_size', type=int)
+    parser.add_argument('--network_lstm_layer_size', type=int, default=256)
     parser.add_argument('--network_lstm_steps', type=int)
     parser.add_argument('--network_lstm_grad_clipping', type=int)
     parser.add_argument('--network_temp_filter1', type=int)
