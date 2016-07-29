@@ -196,16 +196,16 @@ class DeepQLearner:
                          "defaulting to {}".format(cpu_version))
             network_type = cpu_version
 
-        if network_type.endswidth('cuda'):
+        if network_type.endswith('cuda'):
             from lasagne.layers import cuda_convnet
             conv_layer = cuda_convnet.Conv2DCCLayer
 
         # Requires cuDNN which is not freely available.
-        if network_type.endswidth('cudnn'):
+        if network_type.endswith('cudnn'):
             from lasagne.layers import dnn
             conv_layer = dnn.Conv2DDNNLayer
 
-        if network_type.endswidth('cpu'):
+        if network_type.endswith('cpu'):
             from lasagne.layers import conv
             conv_layer = conv.Conv2DLayer
 
@@ -214,12 +214,16 @@ class DeepQLearner:
             return self.build_nature_network(input_width, input_height,
                                              output_dim, num_frames, batch_size,
                                              conv_layer)
-        if network_type.startswidth('nips'):
+        if network_type.startswith('nips'):
             return self.build_nips_network(input_width, input_height,
                                                output_dim, num_frames, batch_size,
                                                conv_layer)
-        if network_type.startswidth('lstm'):
+        if network_type.startswith('lstm'):
             return self.build_lstm(input_width, input_height,
+                                                 output_dim, num_frames,
+                                                 batch_size, conv_layer)
+        if re.match(r'late.?fusion', network_type, re.IGNORECASE):
+            return self.build_late_fusion(input_width, input_height,
                                                  output_dim, num_frames,
                                                  batch_size, conv_layer)
         if network_type == "linear":
@@ -324,7 +328,7 @@ class DeepQLearner:
         )
 
         l_prev = l_conv3
-        pool_size = self.network.params['network_final_pooling_size']
+        pool_size = self.network_params['network_final_pooling_size']
         if pool_size:
             l_prev = lasagne.layers.MaxPool2DLayer(l_conv3, pool_size=pool_size)
 
@@ -347,38 +351,54 @@ class DeepQLearner:
         return l_out
 
     def build_late_fusion(self, input_width, input_height, output_dim,
-            num_frames, batch_size):
+            num_frames, batch_size, conv_layer):
         l_in = lasagne.layers.InputLayer(
             shape=(None, num_frames, input_width, input_height)
         )
 
+        # We'll build 2 towers, so first split up into two streams
         # Take only the first and the last time frames
         # Only makes sense with at least two time frames, pref more
         previous = [
-            lasagne.layers.SliceLayer(l_in, indices=slice(0), axis=1),
-            lasagne.layers.SliceLayer(l_in, indices=slice(-1), axis=1),
+            lasagne.layers.SliceLayer(l_in, indices=slice(0, 1), axis=1),
+            # lasagne.layers.SliceLayer(l_in, indices=slice(-1, None), axis=1),
         ]
 
+        print lasagne.layers.get_output_shape(previous[0])
+
+        # Have 2 layers
         conv_params_by_layer=[(16, (8, 8), (4, 4)), (32, (4, 4), (2, 2))]
+
+        # Share weights across two layer at the same level
+        shared_weights=[
+            theano.shared(lasagne.init.Normal(.01)((16, 1, 8, 8))),
+            # The 16 channels come from the filter size 16 of the previous one
+            theano.shared(lasagne.init.Normal(.01)((32, 16, 4, 4))),
+        ]
 
         for layer_i, params in enumerate(conv_params_by_layer):
             for conv_i, prev in enumerate(previous):
+                # reshape = lasagne.layers.ReshapeLayer(prev,
+                #         shape=(-1, 1, input_width, input_height))
                 conv = conv_layer(
                     prev,
                     num_filters=params[0],
                     filter_size=params[1],
                     stride=params[2],
                     nonlinearity=lasagne.nonlinearities.rectify,
-                    W=lasagne.init.Normal(.01),
+                    W=shared_weights[layer_i],
+                    # TODO should I share biases as well?
+                    # It's of shape num_filters x 1
                     b=lasagne.init.Constant(.1)
                 )
-                print conv.W.shape
+                print lasagne.layers.get_output_shape(conv)
+                # print conv.get_W_shape()
                 previous[conv_i] = conv
 
-        pool_size = self.network.params['network_final_pooling_size']
+        pool_size = self.network_params['network_final_pooling_size']
         if pool_size:
-            previous[0] = lasagne.layers.MaxPool2DLayer(pervious[0], pool_size=pool_size)
-            previous[1] = lasagne.layers.MaxPool2DLayer(pervious[1], pool_size=pool_size)
+            previous[0] = lasagne.layers.MaxPool2DLayer(previous[0], pool_size=pool_size)
+            previous[1] = lasagne.layers.MaxPool2DLayer(previous[1], pool_size=pool_size)
 
         l_merge = lasagne.layers.ConcatLayer( previous,
             axis=1 # Merge along the time axis
@@ -411,8 +431,12 @@ class DeepQLearner:
             shape=(None, num_frames, input_width, input_height)
         )
 
+        l_reshape = lasagne.layers.ReshapeLayer(l_in,
+            shape=(-1, num_frames, input_width, input_height)
+        )
+
         l_conv1 = conv_layer(
-            l_in,
+            l_reshape,
             num_filters=16,
             filter_size=(8, 8),
             stride=(4, 4),
@@ -436,7 +460,7 @@ class DeepQLearner:
         )
 
         l_prev = l_conv2
-        pool_size = self.network.params['network_final_pooling_size']
+        pool_size = self.network_params['network_final_pooling_size']
         if pool_size:
             l_prev = lasagne.layers.MaxPool2DLayer(l_prev, pool_size=pool_size)
 
