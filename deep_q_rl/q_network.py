@@ -234,6 +234,10 @@ class DeepQLearner:
             return self.build_lstm_cuda(input_width, input_height,
                                                  output_dim, num_frames,
                                                  batch_size)
+        if network_type == "lstm_cudnn":
+            return self.build_lstm_cudnn(input_width, input_height,
+                                                 output_dim, num_frames,
+                                                 batch_size)
         # if network_type == 'attempt1_cudnn':
         #     return self.build_attempt1_dnn(input_width, input_height,
         #                                          output_dim, num_frames,
@@ -735,7 +739,6 @@ class DeepQLearner:
                 # DRQ Paper says adding a ReLU after LSTM sucked,
                 # Not sure if they meant as activation function or on top of it
                 nonlinearity=lasagne.nonlinearities.rectify,
-                backwards=False, #default
                 # This was for the stateless LSTM, unneeded now
                 learn_init=False,
                 peepholes=True, # Internal connection from cell to gates
