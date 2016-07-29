@@ -92,6 +92,8 @@ class DataSet(object):
         """
         Pick a random episode, then take #batch_size sequential frames
         or until episode end
+
+        The output of this function only makes sense when phi_length == 1
         """
 
         index = 0
@@ -101,14 +103,30 @@ class DataSet(object):
             if not self.terminal[index]:
                 break
 
-        end_index = index
-        while not self.terminal.take(end_index + 1, mode='wrap'):
+        end_index = index + 1
+        # Batch is at most of batch_size length or the last frame is a terminal
+        while end_index - index < batch_size - 1 and not self.terminal.take(end_index, mode='wrap'):
             end_index += 1
 
-        # Calculate sequence size
+        # End index is inclusive
+        indices = np.arange(index, end_index + 1)
+        next_indices = indices + 1
+        this_batch_size = len(indices)
+
         # Allocate and fill arrays
+        # Reshape to a 1-channel img
+        states = np.reshape(self.imgs.take(indices, axis=0, mode='wrap'),
+                (this_batch_size, 1, self.width, self.height))
+        next_states = np.reshape(self.imgs.take(next_indices, axis=0, mode='wrap'),
+                (this_batch_size, 1, self.width, self.height))
+        actions = np.reshape(self.actions.take(indices, mode='wrap'),
+                (this_batch_size, 1))
+        rewards = np.reshape(self.rewards.take(indices, mode='wrap'),
+                (this_batch_size, 1))
+        terminal = np.reshape(self.terminal.take(indices, mode='wrap'),
+                (this_batch_size, 1))
 
-
+        return states, actions, rewards, next_states, terminal
 
 
     def random_batch(self, batch_size):
@@ -140,7 +158,7 @@ next_states for batch_size randomly chosen state transitions.
             initial_indices = np.arange(index, index + self.phi_length)
             transition_indices = initial_indices + 1
             end_index = index + self.phi_length - 1
-            
+
             # Check that the initial state corresponds entirely to a
             # single episode, meaning none but the last frame may be
             # terminal. If the last frame of the initial state is

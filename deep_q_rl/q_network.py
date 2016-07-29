@@ -54,13 +54,26 @@ class DeepQLearner:
 
         self.update_counter = 0
 
-        self.l_out = self.build_network(network_type, input_width, input_height,
+        networks = self.build_network(network_type, input_width, input_height,
                                         num_actions, num_frames, None)
+        if isinstance(networks, tuple):
+            self.l_out = networks[0]
+            self.lstm = networks[1]
+        else:
+            self.l_out = networks
+
         # theano.compile.function_dump('network.dump', self.l_out)
         if self.freeze_interval > 0:
-            self.next_l_out = self.build_network(network_type, input_width,
+            next_networks = self.build_network(network_type, input_width,
                                                  input_height, num_actions,
                                                  num_frames, None)
+
+            if isinstance(next_networks, tuple):
+                self.next_l_out = next_networks[0]
+                self.next_lstm = next_networks[1]
+            else:
+                self.next_l_out = next_networks
+
             self.reset_q_hat()
 
         states = T.tensor4('states')
@@ -69,34 +82,49 @@ class DeepQLearner:
         actions = T.icol('actions')
         terminals = T.icol('terminals')
 
+        # Apparently needed for some layers with a variable input size
+        # Weird, because the others just allow a None batch size,
+        # but let's just play safe for now
+        # For now, it should always look exactly like states
+        # (n_batch, n_time_steps)
+        # mask = T.imatrix('mask')
+
         self.states_shared = theano.shared(
             np.zeros((batch_size, num_frames, input_height, input_width),
-                     dtype=theano.config.floatX))
+                     dtype=theano.config.floatX), name='states')
 
         self.next_states_shared = theano.shared(
             np.zeros((batch_size, num_frames, input_height, input_width),
-                     dtype=theano.config.floatX))
+                     dtype=theano.config.floatX), name='next_states')
 
         self.rewards_shared = theano.shared(
             np.zeros((batch_size, 1), dtype=theano.config.floatX),
-            broadcastable=(False, True))
+            broadcastable=(False, True), name='rewards')
 
         self.actions_shared = theano.shared(
             np.zeros((batch_size, 1), dtype='int32'),
-            broadcastable=(False, True))
+            broadcastable=(False, True), name='actions')
 
         self.terminals_shared = theano.shared(
             np.zeros((batch_size, 1), dtype='int32'),
             broadcastable=(False, True))
 
+        # self.mask_shared = theano.shared(np.ones((batch_size, num_frames),
+        #     dtype='int32'))
+
         q_vals = lasagne.layers.get_output(self.l_out, states / input_scale)
+                # mask_input=mask)
 
         if self.freeze_interval > 0:
             next_q_vals = lasagne.layers.get_output(self.next_l_out,
-                                                    next_states / input_scale)
+                                                    next_states / input_scale
+                                                    )
+                                                    # mask_input=mask)
         else:
             next_q_vals = lasagne.layers.get_output(self.l_out,
-                                                    next_states / input_scale)
+                                                    next_states / input_scale
+                                                    )
+                                                    # mask_input=mask)
             next_q_vals = theano.gradient.disconnected_grad(next_q_vals)
 
         target = (rewards +
@@ -129,6 +157,7 @@ class DeepQLearner:
             raise ValueError("Bad accumulator: {}".format(batch_accumulator))
 
         params = lasagne.layers.helper.get_all_params(self.l_out)
+        print params
         givens = {
             states: self.states_shared,
             next_states: self.next_states_shared,
@@ -201,14 +230,14 @@ class DeepQLearner:
         if network_type == "linear":
             return self.build_linear_network(input_width, input_height,
                                              output_dim, num_frames, batch_size)
-        if network_type == "attempt1_cpu":
-            return self.build_attempt1_cpu(input_width, input_height,
+        if network_type == "lstm_cuda":
+            return self.build_lstm_cuda(input_width, input_height,
                                                  output_dim, num_frames,
                                                  batch_size)
-        if network_type == 'attempt1_cudnn':
-            return self.build_attempt1_dnn(input_width, input_height,
-                                                 output_dim, num_frames,
-                                                 batch_size)
+        # if network_type == 'attempt1_cudnn':
+        #     return self.build_attempt1_dnn(input_width, input_height,
+        #                                          output_dim, num_frames,
+        #                                          batch_size)
 
         if network_type == 'conv3d':
             return self.build_conv3d(input_width, input_height,
@@ -634,16 +663,38 @@ class DeepQLearner:
 
         return l_out
 
+    def build_lstm_cuda(self, input_width, input_height, output_dim,
+                               num_frames, batch_size):
+        from lasagne.layers import cuda_convnet
+        conv_layer = cuda_convnet.Conv2DCCLayer
+        return self.build_lstm(input_width, input_height, output_dim,
+                                  num_frames, batch_size, conv_layer)
 
-    def build_lstm_networks(self, input_width, input_height, output_dim,
+    def build_lstm_cudnn(self, input_width, input_height, output_dim,
+                               num_frames, batch_size):
+        from lasagne.layers import dnn
+        conv_layer = dnn.Conv2DDNNLayer
+        return self.build_lstm(input_width, input_height, output_dim,
+                                  num_frames, batch_size, conv_layer)
+
+    def build_lstm(self, input_width, input_height, output_dim,
                            num_frames, batch_size, conv_layer):
+        from stateful_lstm import LSTMLayer
+        # from lasagne.layers.recurrent import LSTMLayer
         l_in = lasagne.layers.InputLayer(
             # Batch size is undefined so we can chuck in as many as we please
             shape=(None, num_frames, input_width, input_height)
         )
 
+        # Truly the nastiest of hacks. Needs this reshape layer because with phi=1
+        # this simply won't work
+        l_reshape = lasagne.layers.ReshapeLayer(
+                l_in,
+                (-1, num_frames, input_width, input_height)
+                )
+
         l_conv1 = conv_layer(
-            l_in,
+            l_reshape,
             num_filters=16,
             filter_size=(8, 8),
             stride=(4, 4),
@@ -666,15 +717,6 @@ class DeepQLearner:
             # dimshuffle=True
         )
 
-        # l_hidden1 = lasagne.layers.DenseLayer(
-        #     l_conv2,
-        #     num_units=256,
-        #     nonlinearity=lasagne.nonlinearities.rectify,
-        #     #W=lasagne.init.HeUniform(),
-        #     W=lasagne.init.Normal(.01),
-        #     b=lasagne.init.Constant(.1)
-        # )
-
         default_gate = lasagne.layers.Gate(
             W_in=lasagne.init.Normal(.01),
             W_hid=lasagne.init.Normal(.01),
@@ -683,9 +725,9 @@ class DeepQLearner:
             nonlinearity=lasagne.nonlinearities.sigmoid
         )
 
-        l_lstm1 = lasagne.layers.LSTMLayer(
+        l_lstm1 = LSTMLayer(
                 l_conv2,
-                num_units=self.network_params.get('network_lstm_layer_size', 256),
+                num_units=self.network_params['network_lstm_layer_size'] or 256,
                 ingate = default_gate,
                 outgate = default_gate,
                 forgetgate = default_gate,
@@ -694,15 +736,17 @@ class DeepQLearner:
                 # Not sure if they meant as activation function or on top of it
                 nonlinearity=lasagne.nonlinearities.rectify,
                 backwards=False, #default
-                learn_init=True,
+                # This was for the stateless LSTM, unneeded now
+                learn_init=False,
                 peepholes=True, # Internal connection from cell to gates
-                gradient_steps=self.network_params.get('network_lstm_steps', 100), # -1 is entire history
+                gradient_steps=self.network_params['network_lstm_steps'] or 10, # -1 is entire history
                 # grad_clipping=1, # From alex graves' paper, not sure here
                 # This value comes from the other LSTM paper
-                grad_clipping=self.network_params.get('network_grad_clipping', 10),
-                precompute_input=True, # Should be a speedup
+                grad_clipping=self.network_params['network_lstm_grad_clipping'] or 10,
+                precompute_input=False, # Should be a speedup
                 only_return_final=True # Only need output for last frame
                 )
+        print lasagne.layers.get_output_shape(l_lstm1)
 
         l_out = lasagne.layers.DenseLayer(
             l_lstm1,
@@ -713,7 +757,7 @@ class DeepQLearner:
             b=lasagne.init.Constant(.1)
         )
 
-        return l_out
+        return l_out, l_lstm1
 
     def build_linear_network(self, input_width, input_height, output_dim,
                              num_frames, batch_size):
