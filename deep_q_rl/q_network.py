@@ -196,53 +196,35 @@ class DeepQLearner:
                          "defaulting to {}".format(cpu_version))
             network_type = cpu_version
 
-        if network_type == "nature_cuda":
-            return self.build_nature_network_cuda(input_width, input_height,
-                                             output_dim, num_frames, batch_size)
+        if network_type.endswidth('cuda'):
+            from lasagne.layers import cuda_convnet
+            conv_layer = cuda_convnet.Conv2DCCLayer
+
         # Requires cuDNN which is not freely available.
-        if network_type == "nature_cudnn":
-            return self.build_nature_network_dnn(input_width, input_height,
+        if network_type.endswidth('cudnn'):
+            from lasagne.layers import dnn
+            conv_layer = dnn.Conv2DDNNLayer
+
+        if network_type.endswidth('cpu'):
+            from lasagne.layers import conv
+            conv_layer = conv.Conv2DLayer
+
+
+        if network_type.startswith("nature"):
+            return self.build_nature_network(input_width, input_height,
+                                             output_dim, num_frames, batch_size,
+                                             conv_layer)
+        if network_type.startswidth('nips'):
+            return self.build_nips_network(input_width, input_height,
+                                               output_dim, num_frames, batch_size,
+                                               conv_layer)
+        if network_type.startswidth('lstm'):
+            return self.build_lstm(input_width, input_height,
                                                  output_dim, num_frames,
-                                                 batch_size)
-        if network_type == "nature_cpu":
-            return self.build_nature_network_cpu(input_width, input_height,
-                                                 output_dim, num_frames,
-                                                 batch_size)
-        if network_type == "nips_cuda":
-            return self.build_nips_network_cuda(input_width, input_height,
-                                           output_dim, num_frames, batch_size)
-        # Requires cuDNN which is not freely available.
-        if network_type == "nips_cudnn":
-            return self.build_nips_network_dnn(input_width, input_height,
-                                               output_dim, num_frames,
-                                               batch_size)
-        if network_type == "nips_pool_cudnn":
-            return self.build_nips_with_pooling_network_cudnn(input_width, input_height,
-                                               output_dim, num_frames,
-                                               batch_size)
-        if network_type == "nature_pool_cudnn":
-            return self.build_nature_with_pooling_network_cudnn(input_width, input_height,
-                                               output_dim, num_frames,
-                                               batch_size)
-        if network_type == "nips_cpu":
-            return self.build_nips_network_cpu(input_width, input_height,
-                                           output_dim, num_frames, batch_size)
+                                                 batch_size, conv_layer)
         if network_type == "linear":
             return self.build_linear_network(input_width, input_height,
                                              output_dim, num_frames, batch_size)
-        if network_type == "lstm_cuda":
-            return self.build_lstm_cuda(input_width, input_height,
-                                                 output_dim, num_frames,
-                                                 batch_size)
-        if network_type == "lstm_cudnn":
-            return self.build_lstm_cudnn(input_width, input_height,
-                                                 output_dim, num_frames,
-                                                 batch_size)
-        # if network_type == 'attempt1_cudnn':
-        #     return self.build_attempt1_dnn(input_width, input_height,
-        #                                          output_dim, num_frames,
-        #                                          batch_size)
-
         if network_type == 'conv3d':
             return self.build_conv3d(input_width, input_height,
                                                  output_dim, num_frames,
@@ -302,27 +284,6 @@ class DeepQLearner:
         all_params = lasagne.layers.helper.get_all_param_values(self.l_out)
         lasagne.layers.helper.set_all_param_values(self.next_l_out, all_params)
 
-    def build_nature_network_cuda(self, input_width, input_height, output_dim,
-                                  num_frames, batch_size):
-        from lasagne.layers import cuda_convnet
-        conv_layer = cuda_convnet.Conv2DCCLayer
-        return self.build_nature_network(input_width, input_height, output_dim,
-                             num_frames, batch_size, conv_layer)
-
-    def build_nature_network_dnn(self, input_width, input_height, output_dim,
-                                  num_frames, batch_size):
-        from lasagne.layers import dnn
-        conv_layer = dnn.Conv2DDNNLayer
-        return self.build_nature_network(input_width, input_height, output_dim,
-                                    num_frames, batch_size, conv_layer)
-
-    def build_nature_network_cpu(self, input_width, input_height, output_dim,
-                                 num_frames, batch_size):
-        from lasagne.layers import conv
-        conv_layer = conv.Conv2DLayer
-        return self.build_nature_network(input_width, input_height, output_dim,
-                                    num_frames, batch_size, conv_layer)
-
     def build_nature_network(self, input_width, input_height, output_dim,
                              num_frames, batch_size, conv_layer):
         """
@@ -362,8 +323,13 @@ class DeepQLearner:
             b=lasagne.init.Constant(.1)
         )
 
+        l_prev = l_conv3
+        pool_size = self.network.params['network_final_pooling_size']
+        if pool_size:
+            l_prev = lasagne.layers.MaxPool2DLayer(l_conv3, pool_size=pool_size)
+
         l_hidden1 = lasagne.layers.DenseLayer(
-            l_conv3,
+            l_prev,
             num_units=512,
             nonlinearity=lasagne.nonlinearities.rectify,
             W=lasagne.init.HeUniform(),
@@ -380,141 +346,48 @@ class DeepQLearner:
 
         return l_out
 
-    def build_nips_network_cuda(self, input_width, input_height, output_dim,
-                               num_frames, batch_size):
-        from lasagne.layers import cuda_convnet
-        conv_layer = cuda_convnet.Conv2DCCLayer
-        return self.build_nips_network(input_width, input_height, output_dim,
-                                  num_frames, batch_size, conv_layer)
-
-    def build_nips_network_dnn(self, input_width, input_height, output_dim,
-                               num_frames, batch_size):
-        """
-        Build a network consistent with the 2013 NIPS paper.
-        """
-        # Import it here, in case it isn't installed.
-        from lasagne.layers import dnn
-        conv_layer = dnn.Conv2DDNNLayer
-        return self.build_nips_network(input_width, input_height, output_dim,
-                                  num_frames, batch_size, conv_layer)
-
-    def build_nips_network_cpu(self, input_width, input_height, output_dim,
-                               num_frames, batch_size):
-        from lasagne.layers import conv
-        conv_layer = conv.Conv2DLayer
-        return self.build_nips_network(input_width, input_height, output_dim,
-                                  num_frames, batch_size, conv_layer)
-
-    def build_nature_with_pooling_network_cudnn(self, input_width, input_height, output_dim,
-                               num_frames, batch_size):
-        from lasagne.layers import dnn
-        conv_layer = dnn.Conv2DDNNLayer
-        return self.build_nature_with_pooling_network(input_width, input_height, output_dim,
-                                  num_frames, batch_size, conv_layer)
-
-    def build_nature_with_pooling_network(self, input_width, input_height, output_dim,
-                             num_frames, batch_size, conv_layer):
-        """
-        Build a large network consistent with the DeepMind Nature paper.
-        """
-        l_in = lasagne.layers.InputLayer(
-            shape=(batch_size, num_frames, input_width, input_height)
-        )
-
-        l_conv1 = conv_layer(
-            l_in,
-            num_filters=32,
-            filter_size=(8, 8),
-            stride=(4, 4),
-            nonlinearity=lasagne.nonlinearities.rectify,
-            W=lasagne.init.HeUniform(), # Defaults to Glorot
-            b=lasagne.init.Constant(.1)
-        )
-
-        l_conv2 = conv_layer(
-            l_conv1,
-            num_filters=64,
-            filter_size=(4, 4),
-            stride=(2, 2),
-            nonlinearity=lasagne.nonlinearities.rectify,
-            W=lasagne.init.HeUniform(),
-            b=lasagne.init.Constant(.1)
-        )
-
-        l_conv3 = conv_layer(
-            l_conv2,
-            num_filters=64,
-            filter_size=(3, 3),
-            stride=(1, 1),
-            nonlinearity=lasagne.nonlinearities.rectify,
-            W=lasagne.init.HeUniform(),
-            b=lasagne.init.Constant(.1)
-        )
-
-        l_pool = lasagne.layers.MaxPool2DLayer(l_conv3, pool_size=(2,2))
-
-        l_hidden1 = lasagne.layers.DenseLayer(
-            l_pool,
-            num_units=512,
-            nonlinearity=lasagne.nonlinearities.rectify,
-            W=lasagne.init.HeUniform(),
-            b=lasagne.init.Constant(.1)
-        )
-
-        l_out = lasagne.layers.DenseLayer(
-            l_hidden1,
-            num_units=output_dim,
-            nonlinearity=None,
-            W=lasagne.init.HeUniform(),
-            b=lasagne.init.Constant(.1)
-        )
-
-        return l_out
-
-    def build_nips_with_pooling_network_cudnn(self, input_width, input_height, output_dim,
-                               num_frames, batch_size):
-        from lasagne.layers import dnn
-        conv_layer = dnn.Conv2DDNNLayer
-        return self.build_nips_with_pooling_network(input_width, input_height, output_dim,
-                                  num_frames, batch_size, conv_layer)
-
-    def build_nips_with_pooling_network(self, input_width, input_height, output_dim,
-                           num_frames, batch_size, conv_layer):
+    def build_late_fusion(self, input_width, input_height, output_dim,
+            num_frames, batch_size):
         l_in = lasagne.layers.InputLayer(
             shape=(None, num_frames, input_width, input_height)
         )
 
-        l_conv1 = conv_layer(
-            l_in,
-            num_filters=16,
-            filter_size=(8, 8),
-            stride=(4, 4),
-            nonlinearity=lasagne.nonlinearities.rectify,
-            #W=lasagne.init.HeUniform(c01b=True),
-            W=lasagne.init.Normal(.01),
-            b=lasagne.init.Constant(.1)
-            # dimshuffle=True
-        )
+        # Take only the first and the last time frames
+        # Only makes sense with at least two time frames, pref more
+        previous = [
+            lasagne.layers.SliceLayer(l_in, indices=slice(0), axis=1),
+            lasagne.layers.SliceLayer(l_in, indices=slice(-1), axis=1),
+        ]
 
-        l_conv2 = conv_layer(
-            l_conv1,
-            num_filters=32,
-            filter_size=(4, 4),
-            stride=(2, 2),
-            nonlinearity=lasagne.nonlinearities.rectify,
-            #W=lasagne.init.HeUniform(c01b=True),
-            W=lasagne.init.Normal(.01),
-            b=lasagne.init.Constant(.1)
-            # dimshuffle=True
-        )
+        conv_params_by_layer=[(16, (8, 8), (4, 4)), (32, (4, 4), (2, 2))]
 
-        l_pool = lasagne.layers.MaxPool2DLayer(l_conv2, pool_size=(2,2))
+        for layer_i, params in enumerate(conv_params_by_layer):
+            for conv_i, prev in enumerate(previous):
+                conv = conv_layer(
+                    prev,
+                    num_filters=params[0],
+                    filter_size=params[1],
+                    stride=params[2],
+                    nonlinearity=lasagne.nonlinearities.rectify,
+                    W=lasagne.init.Normal(.01),
+                    b=lasagne.init.Constant(.1)
+                )
+                print conv.W.shape
+                previous[conv_i] = conv
+
+        pool_size = self.network.params['network_final_pooling_size']
+        if pool_size:
+            previous[0] = lasagne.layers.MaxPool2DLayer(pervious[0], pool_size=pool_size)
+            previous[1] = lasagne.layers.MaxPool2DLayer(pervious[1], pool_size=pool_size)
+
+        l_merge = lasagne.layers.ConcatLayer( previous,
+            axis=1 # Merge along the time axis
+        )
 
         l_hidden1 = lasagne.layers.DenseLayer(
-            l_pool,
+            l_merge,
             num_units=256,
             nonlinearity=lasagne.nonlinearities.rectify,
-            #W=lasagne.init.HeUniform(),
             W=lasagne.init.Normal(.01),
             b=lasagne.init.Constant(.1)
         )
@@ -523,7 +396,6 @@ class DeepQLearner:
             l_hidden1,
             num_units=output_dim,
             nonlinearity=None,
-            #W=lasagne.init.HeUniform(),
             W=lasagne.init.Normal(.01),
             b=lasagne.init.Constant(.1)
         )
@@ -563,8 +435,13 @@ class DeepQLearner:
             # dimshuffle=True
         )
 
+        l_prev = l_conv2
+        pool_size = self.network.params['network_final_pooling_size']
+        if pool_size:
+            l_prev = lasagne.layers.MaxPool2DLayer(l_prev, pool_size=pool_size)
+
         l_hidden1 = lasagne.layers.DenseLayer(
-            l_conv2,
+            l_prev,
             num_units=256,
             nonlinearity=lasagne.nonlinearities.rectify,
             #W=lasagne.init.HeUniform(),
@@ -582,20 +459,6 @@ class DeepQLearner:
         )
 
         return l_out
-
-    def build_attempt1_cpu(self, input_width, input_height, output_dim,
-                               num_frames, batch_size):
-        from lasagne.layers import conv
-        conv_layer = conv.Conv2DLayer
-        return self.build_attempt1(input_width, input_height, output_dim,
-                                  num_frames, batch_size, conv_layer)
-
-    def build_attempt1_dnn(self, input_width, input_height, output_dim,
-                               num_frames, batch_size):
-        from lasagne.layers import dnn
-        conv_layer = dnn.Conv2DDNNLayer
-        return self.build_attempt1(input_width, input_height, output_dim,
-                                  num_frames, batch_size, conv_layer)
 
     def build_conv3d(self, input_width, input_height, output_dim, num_frames, batch_size):
         l_in = lasagne.layers.InputLayer(
@@ -666,20 +529,6 @@ class DeepQLearner:
         )
 
         return l_out
-
-    def build_lstm_cuda(self, input_width, input_height, output_dim,
-                               num_frames, batch_size):
-        from lasagne.layers import cuda_convnet
-        conv_layer = cuda_convnet.Conv2DCCLayer
-        return self.build_lstm(input_width, input_height, output_dim,
-                                  num_frames, batch_size, conv_layer)
-
-    def build_lstm_cudnn(self, input_width, input_height, output_dim,
-                               num_frames, batch_size):
-        from lasagne.layers import dnn
-        conv_layer = dnn.Conv2DDNNLayer
-        return self.build_lstm(input_width, input_height, output_dim,
-                                  num_frames, batch_size, conv_layer)
 
     def build_lstm(self, input_width, input_height, output_dim,
                            num_frames, batch_size, conv_layer):

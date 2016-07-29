@@ -183,7 +183,7 @@ def process_args(args, defaults, description):
     parser.add_argument('--network_lstm_grad_clipping', type=int)
     parser.add_argument('--network_temp_filter1', type=int)
     parser.add_argument('--network_temp_filter2', type=int)
-    parser.add_argument('--network_final_pooling_size', type=int)
+    parser.add_argument('--network_final_pooling_size', type=int, default=0)
     parser.add_argument('--network_lstm_reset_on_start', type=bool, default=True)
     parser.add_argument('--network_lstm_reset_on_training', type=bool, default=True)
 
