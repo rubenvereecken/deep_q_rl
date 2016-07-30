@@ -435,6 +435,8 @@ class DeepQLearner:
             shape=(-1, num_frames, input_width, input_height)
         )
 
+        print lasagne.layers.get_output_shape(l_in)
+
         l_conv1 = conv_layer(
             l_reshape,
             num_filters=16,
@@ -447,6 +449,8 @@ class DeepQLearner:
             # dimshuffle=True
         )
 
+        print lasagne.layers.get_output_shape(l_conv1)
+
         l_conv2 = conv_layer(
             l_conv1,
             num_filters=32,
@@ -458,6 +462,8 @@ class DeepQLearner:
             b=lasagne.init.Constant(.1)
             # dimshuffle=True
         )
+
+        print lasagne.layers.get_output_shape(l_conv2)
 
         l_prev = l_conv2
         pool_size = self.network_params['network_final_pooling_size']

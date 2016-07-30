@@ -114,7 +114,7 @@ class ALEExperiment(object):
         randomly determined number of null action to randomize the initial game
         state.
         """
-        
+
         if not self.terminal_lol or self.ale.game_over():
             self.ale.reset_game()
 
@@ -173,7 +173,7 @@ class ALEExperiment(object):
             if self.steps_left_this_epoch % self.progress_frequency == 0:
                 time_since_last = time.time() - self.last_progress_time
                 logging.info("steps_left:\t{}\ttime spent on {} steps:\t{:.2f}s\tsteps/second:\t{:.2f}".format
-                             (self.steps_left_this_epoch, self.progress_frequency, 
+                             (self.steps_left_this_epoch, self.progress_frequency,
                               time_since_last, self.progress_frequency / time_since_last))
                 self.agent.report()
                 self.last_progress_time = time.time()
@@ -219,7 +219,6 @@ class ALEExperiment(object):
 
             return cropped
         elif self.resize_method == 'scale':
-            # TODO verify that INTER_NEAREST is better than linear
             return cv2.resize(image,
                               (self.resized_width, self.resized_height),
                               interpolation=cv2.INTER_NEAREST)
