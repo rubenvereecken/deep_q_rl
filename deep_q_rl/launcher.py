@@ -177,6 +177,8 @@ def process_args(args, defaults, description):
     parser.add_argument('--profile', dest='profile', action='store_true')
     parser.add_argument('--resume', dest='resume', default=False,
             action='store_true', help='Resume from save_path')
+    parser.add_argument('--screen-mode', dest='screen_mode', default='grayscale',
+            help='grayscale|rgb')
 
     parser.add_argument('--network_lstm_layer_size', type=int, default=256)
     parser.add_argument('--network_lstm_steps', type=int)
@@ -359,6 +361,7 @@ def launch(args, defaults, description):
                                   parameters.update_frequency,
                                   rng, save_path,
                                   parameters.profile,
+                                  parameters.screen_mode,
                                   network_params)
 
     experiment = ale_experiment.ALEExperiment(ale, agent,

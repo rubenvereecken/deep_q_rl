@@ -22,9 +22,11 @@ class NeuralAgent(object):
 
     def __init__(self, q_network, epsilon_start, epsilon_min,
                  epsilon_decay, replay_memory_size, replay_start_size,
-                 update_frequency, rng, save_path, profile, network_params):
+                 update_frequency, rng, save_path, profile, screen_mode,
+                 network_params):
 
         self.network = q_network
+        self.network_params = network_params
         self.epsilon_start = epsilon_start
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
@@ -34,6 +36,7 @@ class NeuralAgent(object):
         self.rng = rng
         self.save_path = save_path
         self.profile = profile
+        self.rgb = (screen_mode == 'rgb')
 
         self.phi_length = self.network.num_frames
         self.image_width = self.network.input_width
