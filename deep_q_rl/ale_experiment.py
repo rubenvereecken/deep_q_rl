@@ -8,6 +8,7 @@ import logging
 import time
 import numpy as np
 import cv2
+import re
 
 # Number of rows to crop off the bottom of the (downsampled) screen.
 # This is appropriate for breakout, but it may need to be modified
@@ -16,12 +17,13 @@ CROP_OFFSET = 8
 
 
 class ALEExperiment(object):
-    def __init__(self, ale, agent, resized_width, resized_height,
-                 resize_method, num_epochs, epoch_length, test_length,
+    def __init__(self, ale, agent, resized_width, resized_height, num_channels,
+                 resize_method, color_mode, num_epochs, epoch_length, test_length,
                  death_ends_episode, max_start_nullops, rng, progress_frequency,
                  start_epoch=1):
         self.ale = ale
         self.agent = agent
+        self.color_mode = color_mode
         self.num_epochs = num_epochs
         self.start_epoch = start_epoch
         # self.epoch = start_epoch        # Above 1 when resuming
@@ -33,6 +35,7 @@ class ALEExperiment(object):
         self.resized_height = resized_height
         self.resize_method = resize_method
         self.width, self.height = ale.getScreenDims()
+        self.num_channels = num_channels
 
         self.buffer_length = 2
         self.buffer_count = 0
@@ -138,7 +141,12 @@ class ALEExperiment(object):
         index = self.buffer_count % self.buffer_length
 
         # TODO DeepMind uses luminance, not grayscale. Big diff?
-        self.ale.getScreenGrayscale(self.screen_buffer[index, ...])
+        if re.match(r'gr[ae]yscale', self.color_mode):
+            self.ale.getScreenGrayscale(self.screen_buffer[index, ...])
+        elif self.color_mode.startswith('raw'):
+            self.ale.getScreen(self.screen_buffer[index, ...])
+        else:
+            raise Exception('Unknown color mode ' + self.color_mode)
 
         self.buffer_count += 1
         return reward

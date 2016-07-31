@@ -177,6 +177,8 @@ def process_args(args, defaults, description):
     parser.add_argument('--profile', dest='profile', action='store_true')
     parser.add_argument('--resume', dest='resume', default=False,
             action='store_true', help='Resume from save_path')
+    parser.add_argument('--color-mode', dest='color_mode', default='grayscale',
+            help='grayscale|rgb')
 
     parser.add_argument('--network_lstm_layer_size', type=int, default=256)
     parser.add_argument('--network_lstm_steps', type=int)
@@ -297,6 +299,12 @@ def launch(args, defaults, description):
         theano.config.dnn.conv.algo_bwd = 'deterministic'
 
 
+    if parameters.color_mode.startswith('rgb'):
+        num_channels = 3
+    else:
+        num_channels = 1
+
+
     ale = ale_python_interface.ALEInterface()
     ale.setInt('random_seed', rng.randint(1000))
 
@@ -324,6 +332,7 @@ def launch(args, defaults, description):
     if parameters.nn_file is None:
         network = q_network.DeepQLearner(defaults.RESIZED_WIDTH,
                                          defaults.RESIZED_HEIGHT,
+                                         num_channels,
                                          num_actions,
                                          parameters.phi_length,
                                          parameters.discount,
@@ -364,7 +373,9 @@ def launch(args, defaults, description):
     experiment = ale_experiment.ALEExperiment(ale, agent,
                                               defaults.RESIZED_WIDTH,
                                               defaults.RESIZED_HEIGHT,
+                                              num_channels,
                                               parameters.resize_method,
+                                              parameters.color_mode,
                                               parameters.epochs,
                                               parameters.steps_per_epoch,
                                               parameters.steps_per_test,

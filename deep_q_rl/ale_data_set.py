@@ -12,7 +12,7 @@ class DataSet(object):
     """A replay memory consisting of circular buffers for observed images,
     actions, and rewards.
     """
-    def __init__(self, width, height, rng, max_steps=1000, phi_length=4):
+    def __init__(self, width, height, rng, max_steps=1000, num_channels=1, phi_length=4):
         """Construct a DataSet.
 
         Arguments:
@@ -28,12 +28,13 @@ class DataSet(object):
         # Store arguments.
         self.width = width
         self.height = height
+        self.num_channels = num_channels
         self.max_steps = max_steps
         self.phi_length = phi_length
         self.rng = rng
 
         # Allocate the circular buffers and indices.
-        self.imgs = np.zeros((max_steps, height, width), dtype='uint8')
+        self.imgs = np.zeros((max_steps, num_channels, height, width), dtype='uint8')
         self.actions = np.zeros(max_steps, dtype='int32')
         self.rewards = np.zeros(max_steps, dtype=floatX)
         self.terminal = np.zeros(max_steps, dtype='bool')
@@ -81,7 +82,8 @@ class DataSet(object):
         """
         indexes = np.arange(self.top - self.phi_length + 1, self.top)
 
-        phi = np.empty((self.phi_length, self.height, self.width), dtype=floatX)
+        phi = np.empty((self.phi_length, self.num_channels, self.height, self.width),
+                dtype=floatX)
         phi[0:self.phi_length - 1] = self.imgs.take(indexes,
                                                     axis=0,
                                                     mode='wrap')
@@ -115,10 +117,9 @@ class DataSet(object):
 
         # Allocate and fill arrays
         # Reshape to a 1-channel img
-        states = np.reshape(self.imgs.take(indices, axis=0, mode='wrap'),
-                (this_batch_size, 1, self.width, self.height))
-        next_states = np.reshape(self.imgs.take(next_indices, axis=0, mode='wrap'),
-                (this_batch_size, 1, self.width, self.height))
+        # This used to be a reshape but I went with depth channel in the end
+        states = self.imgs.take(indices, axis=0, mode='wrap')
+        next_states = self.imgs.take(next_indices, axis=0, mode='wrap')
         actions = np.reshape(self.actions.take(indices, mode='wrap'),
                 (this_batch_size, 1))
         rewards = np.reshape(self.rewards.take(indices, mode='wrap'),
@@ -137,6 +138,7 @@ next_states for batch_size randomly chosen state transitions.
         # Allocate the response.
         states = np.zeros((batch_size,
                            self.phi_length,
+                           self.num_channels,
                            self.height,
                            self.width),
                           dtype='uint8')
@@ -145,6 +147,7 @@ next_states for batch_size randomly chosen state transitions.
         terminal = np.zeros((batch_size, 1), dtype='bool')
         next_states = np.zeros((batch_size,
                                 self.phi_length,
+                                self.num_channels,
                                 self.height,
                                 self.width),
                                dtype='uint8')
