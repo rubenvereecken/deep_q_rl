@@ -57,6 +57,7 @@ class NeuralAgent(object):
                                                   height=self.image_height,
                                                   rng=rng,
                                                   max_steps=self.phi_length * 2,
+                                                  num_channels=self.num_channels,
                                                   phi_length=self.phi_length)
         logging.info("Finished creating data sets")
         self.epsilon = self.epsilon_start
