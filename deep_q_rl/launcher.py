@@ -368,6 +368,7 @@ def launch(args, defaults, description):
                                   parameters.update_frequency,
                                   rng, save_path,
                                   parameters.profile,
+                                  parameters.color_mode,
                                   network_params)
 
     experiment = ale_experiment.ALEExperiment(ale, agent,
