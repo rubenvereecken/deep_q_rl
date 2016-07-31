@@ -119,6 +119,8 @@ def process_args(args, defaults, description):
                         type=int, default=defaults.REPLAY_MEMORY_SIZE,
                         help=('Maximum number of steps stored in replay ' +
                               'memory. (default: %(default)s)'))
+    parser.add_argument('--replay-memory-size', dest="replay_memory_size",
+                        type=int, default=defaults.REPLAY_MEMORY_SIZE)
     parser.add_argument('--batch-size', dest="batch_size",
                         type=int, default=defaults.BATCH_SIZE,
                         help='Batch size. (default: %(default)s)')
