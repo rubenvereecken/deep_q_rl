@@ -223,9 +223,9 @@ class DeepQLearner:
             return self.build_lstm(input_dim, output_dim, conv_layer)
         if re.match(r'late.?fusion', network_type, re.IGNORECASE):
             return self.build_late_fusion(input_dim, output_dim, conv_layer)
-        if network_type == "linear":
+        if network_type.startswith("linear"):
             return self.build_linear_network(input_dim, output_dim, conv_layer)
-        if network_type == 'conv3d':
+        if network_type.startswith('conv3d'):
             return self.build_conv3d(input_dim, output_dim, conv_layer)
 
         else:
@@ -262,7 +262,7 @@ class DeepQLearner:
     def q_vals(self, state):
         # Might be a slightly cheaper way by reshaping the passed-in state,
         # though that might destroy the original
-        states = np.empty((1, self.num_frames, self.input_height,
+        states = np.empty((1, self.num_frames, self.num_channels, self.input_height,
                            self.input_width), dtype=theano.config.floatX)
         states[0, ...] = state
         return self.more_q_vals(states)[0]

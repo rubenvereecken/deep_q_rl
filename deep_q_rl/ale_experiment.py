@@ -218,7 +218,7 @@ class ALEExperiment(object):
             # print np.unique(rgb[0]), np.unique(rgb[1])
             return rgb
         else:
-            return resized_image
+            return np.resize(resized_image, (1, self.resized_height, self.resized_width))
 
 
     def resize_image(self, image):
