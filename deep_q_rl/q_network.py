@@ -77,7 +77,9 @@ class DeepQLearner:
 
             self.reset_q_hat()
 
-        btensor5 = T.TensorType('uint8', (False,) * 5)
+        # This really really needs to be floats for now.
+        # It makes sense if they use it for computations
+        btensor5 = T.TensorType(theano.config.floatX, (False,) * 5)
         states = btensor5('states')
         next_states = btensor5('next_states')
         rewards = T.col('rewards')
@@ -93,11 +95,11 @@ class DeepQLearner:
 
         self.states_shared = theano.shared(
             np.zeros((batch_size, num_frames, num_channels, input_height, input_width),
-                     dtype=np.uint8), name='states')
+                     dtype=theano.config.floatX), name='states')
 
         self.next_states_shared = theano.shared(
             np.zeros((batch_size, num_frames, num_channels, input_height, input_width),
-                     dtype=np.uint8), name='next_states')
+                     dtype=theano.config.floatX), name='next_states')
 
         self.rewards_shared = theano.shared(
             np.zeros((batch_size, 1), dtype=theano.config.floatX),
