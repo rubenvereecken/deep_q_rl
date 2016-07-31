@@ -262,7 +262,7 @@ class DeepQLearner:
     def q_vals(self, state):
         # Might be a slightly cheaper way by reshaping the passed-in state,
         # though that might destroy the original
-        states = np.empty((1, self.num_channels, self.num_frames, self.input_height,
+        states = np.empty((1, self.num_frames, self.num_channels, self.input_height,
                            self.input_width), dtype=theano.config.floatX)
         states[0, ...] = state
         return self.more_q_vals(states)[0]
