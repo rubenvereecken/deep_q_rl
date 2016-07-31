@@ -36,11 +36,11 @@ class NeuralAgent(object):
         self.rng = rng
         self.save_path = save_path
         self.profile = profile
-        self.rgb = (screen_mode == 'rgb')
 
         self.phi_length = self.network.num_frames
         self.image_width = self.network.input_width
         self.image_height = self.network.input_height
+        self.num_channels = self.network.num_channels
 
         self.exp_dir = save_path
         self.num_actions = self.network.num_actions
@@ -49,6 +49,7 @@ class NeuralAgent(object):
                                              height=self.image_height,
                                              rng=rng,
                                              max_steps=self.replay_memory_size,
+                                             num_channels=self.num_channels,
                                              phi_length=self.phi_length)
 
         # just needs to be big enough to create phi's

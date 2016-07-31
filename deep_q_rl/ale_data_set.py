@@ -34,6 +34,7 @@ class DataSet(object):
         self.rng = rng
 
         # Allocate the circular buffers and indices.
+        print ("Mem forecast for imgs in MB:", max_steps * num_channels * height * width / 1024**2)
         self.imgs = np.zeros((max_steps, num_channels, height, width), dtype='uint8')
         self.actions = np.zeros(max_steps, dtype='int32')
         self.rewards = np.zeros(max_steps, dtype=floatX)

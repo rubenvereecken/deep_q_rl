@@ -9,6 +9,7 @@ import time
 import numpy as np
 import cv2
 import re
+from utils import asRGB
 
 # Number of rows to crop off the bottom of the (downsampled) screen.
 # This is appropriate for breakout, but it may need to be modified
@@ -40,8 +41,11 @@ class ALEExperiment(object):
         self.buffer_length = 2
         self.buffer_count = 0
         self.screen_buffer = np.empty((self.buffer_length,
-                                       self.height, self.width),
-                                      dtype=np.uint8)
+                                    self.height, self.width),
+                                    dtype=np.uint8)
+        self.rgb_buffer = np.empty((self.buffer_length, 3,
+                                    resized_height, resized_width),
+                                    dtype=np.uint8)
 
         self.terminal_lol = False # Most recent episode ended on a loss of life
         self.max_start_nullops = max_start_nullops
@@ -143,7 +147,7 @@ class ALEExperiment(object):
         # TODO DeepMind uses luminance, not grayscale. Big diff?
         if re.match(r'gr[ae]yscale', self.color_mode):
             self.ale.getScreenGrayscale(self.screen_buffer[index, ...])
-        elif self.color_mode.startswith('raw'):
+        elif re.match(r'(raw)|(rgb)', self.color_mode):
             self.ale.getScreen(self.screen_buffer[index, ...])
         else:
             raise Exception('Unknown color mode ' + self.color_mode)
@@ -205,7 +209,16 @@ class ALEExperiment(object):
         index = self.buffer_count % self.buffer_length - 1
         image = self.screen_buffer[index, ...]
 
-        return self.resize_image(image)
+        resized_image = self.resize_image(image)
+
+        if self.color_mode.startswith('rgb'):
+            rgb = self.rgb_buffer[index]
+            # TODO uuh should I copy?
+            asRGB(resized_image, rgb)
+            # print np.unique(rgb[0]), np.unique(rgb[1])
+            return rgb
+        else:
+            return resized_image
 
 
     def resize_image(self, image):
