@@ -11,20 +11,26 @@
 # Load Cuda module
 module load CUDA/7.5.18
 
-TIME_STR=`python -c "import time; print time.strftime('%d-%m-%Y_%H-%M-%S')"` 
+TIME_STR=`python -c "import time; print time.strftime('%d-%m-%Y_%H-%M-%S')"`
 SCRIPT=${SCRIPT:="./run_nips.py"}
 NETWORK_TYPE=${NETWORK_TYPE:-nips_cudnn}
+THIS_SCRIPT="../hydra/run_gpu.sh"
+
+if [ -z $REP ]; then
+  POSTFIX="-rep_$REP"
+fi
 
 # Label out directory
 LABEL=${LABEL:=$PBS_JOBNAME}
 if [ ! -z $LABEL ]; then
-  SAVE_PATH="${WORKDIR}/${LABEL}-${ROM}-${TIME_STR}"
-else 
-  SAVE_PATH="${WORKDIR}/${ROM}-${TIME_STR}"
+  SAVE_PATH="${WORKDIR}/${LABEL}-${ROM}$POSTFIX-${TIME_STR}"
+else
+  SAVE_PATH="${WORKDIR}/${ROM}$POSTFIX-${TIME_STR}"
 fi
 
 mkdir -p $SAVE_PATH
 echo "Saving to $SAVE_PATH"
+cp $THIS_SCRIPT $SAVE_PATH/run.sh
 
 ROM=${ROM:="space_invaders"}
 
