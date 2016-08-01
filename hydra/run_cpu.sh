@@ -25,7 +25,7 @@ echo "Saving to $SAVE_PATH"
 
 ROM=${ROM:="space_invaders"}
 
-PARAMS="--save-path=$SAVE_PATH -r ${ROM} --log_level=DEBUG --dont-generate-logdir --deterministic=False"
+PARAMS="--save-path=$SAVE_PATH -r ${ROM} --log_level=DEBUG --dont-generate-logdir --undeterministic"
 if [ ! -z $NETWORK_TYPE ]; then
   PARAMS="$PARAMS --network-type=$NETWORK_TYPE"
 fi
