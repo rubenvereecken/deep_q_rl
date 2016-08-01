@@ -156,6 +156,9 @@ def process_args(args, defaults, description):
                         type=bool, default=defaults.DETERMINISTIC,
                         help=('Whether to use deterministic parameters ' +
                               'for learning. (default: %(default)s)'))
+    parser.add_argument('--undeterministic', dest="deterministic",
+                        default=defaults.DETERMINISTIC,
+                        action='store_false')
     parser.add_argument('--cudnn_deterministic', dest="cudnn_deterministic",
                         type=bool, default=defaults.CUDNN_DETERMINISTIC,
                         help=('Whether to use deterministic backprop. ' +
