@@ -8,20 +8,26 @@
 #PBS -o /gpfs/work/rvereeck/out-$PBS_JOBNAME.txt
 #PBS -j oe
 
-TIME_STR=`python -c "import time; print time.strftime('%d-%m-%Y_%H-%M-%S')"` 
+TIME_STR=`python -c "import time; print time.strftime('%d-%m-%Y_%H-%M-%S')"`
 SCRIPT=${SCRIPT:="./run_nips.py"}
 NETWORK_TYPE=${NETWORK_TYPE:-nips_cpu}
+THIS_SCRIPT="../hydra/run_cpu.sh"
+
+if [ -z $REP ]; then
+  POSTFIX="-rep_$REP"
+fi
 
 # Label out directory
 LABEL=${LABEL:=$PBS_JOBNAME}
 if [ ! -z $LABEL ]; then
-  SAVE_PATH="${WORKDIR}/${LABEL}-${ROM}-${TIME_STR}"
-else 
-  SAVE_PATH="${WORKDIR}/${ROM}-${TIME_STR}"
+  SAVE_PATH="${WORKDIR}/${LABEL}-${ROM}$POSTFIX-${TIME_STR}"
+else
+  SAVE_PATH="${WORKDIR}/${ROM}$POSTFIX-${TIME_STR}"
 fi
 
 mkdir -p $SAVE_PATH
 echo "Saving to $SAVE_PATH"
+cp $THIS_SCRIPT $SAVE_PATH/run.sh
 
 ROM=${ROM:="space_invaders"}
 
@@ -33,7 +39,7 @@ fi
 echo "Running ${ROM} with ${NETWORK_TYPE} on $HOST - " `date`
 echo "RUNNING" > $SAVE_PATH/state
 
-trap "echo INTERRUPTED > $SAVE_PATH/state" INT TERM
+trap "echo INTERRUPTED > $SAVE_PATH/state" INT TERM SIGINT SIGTERM
 
 # All defaults will be overwritten by arguments passed to this script
 export THEANO_FLAGS='device=cpu,allow_gc=True,openmp=True,openmp_elemwise_minsize=200000'
