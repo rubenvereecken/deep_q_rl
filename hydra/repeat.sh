@@ -1,5 +1,5 @@
 #!/bin/bash
-REPS=5
+REPS=${REPS:-5}
 for i in {1..5}
 do
   echo $i
