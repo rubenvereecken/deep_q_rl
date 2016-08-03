@@ -57,6 +57,8 @@ def process_args(args, defaults, description):
     parser.add_argument('-t', '--test-length', dest="steps_per_test",
                         type=int, default=defaults.STEPS_PER_TEST,
                         help='Number of steps per test (default: %(default)s)')
+    parser.add_argument('--steps-per-test', dest="steps_per_test",
+                        type=int, default=defaults.STEPS_PER_TEST)
     parser.add_argument('--display-screen', dest="display_screen",
                         action='store_true', default=False,
                         help='Show the game screen.')
@@ -191,8 +193,16 @@ def process_args(args, defaults, description):
     parser.add_argument('--network_temp_filter1', type=int)
     parser.add_argument('--network_temp_filter2', type=int)
     parser.add_argument('--network_final_pooling_size', type=int, default=0)
-    parser.add_argument('--network_lstm_reset_on_start', type=bool, default=True)
-    parser.add_argument('--network_lstm_reset_on_training', type=bool, default=True)
+    parser.add_argument('--network_lstm_no_reset_on_start',
+            dest='network_lstm_reset_on_start', action='store_false')
+    parser.add_argument('--network_lstm_no_reset_on_training',
+            dest='network_lstm_reset_on_training', action='store_false')
+    parser.add_argument('--network_lstm_type', type=string, default='original')
+
+    parser.set_defaults(
+            network_lstm_reset_on_start=True,
+            network_lstm_reset_on_training=True
+            )
 
     parameters = parser.parse_args(args)
     if parameters.resume:

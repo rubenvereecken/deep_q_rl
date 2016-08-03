@@ -205,7 +205,7 @@ class DeepQLearner:
             conv_layer = cuda_convnet.Conv2DCCLayer
 
         # Requires cuDNN which is not freely available.
-        if network_type.endswith('cudnn'):
+        if network_type.endswith('cudnn') or network_type.endswith('gpu'):
             from lasagne.layers import dnn
             conv_layer = dnn.Conv2DDNNLayer
 
@@ -570,8 +570,10 @@ class DeepQLearner:
     def build_lstm(self, input_dim, output_dim, conv_layer):
         batch_size, num_frames, num_channels, input_width, input_height = input_dim
 
-        from stateful_lstm import LSTMLayer
-        # from lasagne.layers.recurrent import LSTMLayer
+        if self.network_params['network_lstm_type'] == 'mine':
+            from stateful_lstm import LSTMLayer
+        else:
+            from lasagne.layers.recurrent import LSTMLayer
 
         l_in = lasagne.layers.InputLayer(
             # Batch size is undefined so we can chuck in as many as we please
