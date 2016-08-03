@@ -33,6 +33,7 @@ mkdir -p $SAVE_PATH
 echo "Saving to $SAVE_PATH"
 cp $THIS_SCRIPT $SAVE_PATH/run.sh
 echo $GIT_REV > $SAVE_PATH/gitrev
+echo $@ > $SAVE_PATH/hydra.sh
 
 ROM=${ROM:="space_invaders"}
 
