@@ -371,6 +371,8 @@ def launch(args, defaults, description):
         handle = open(parameters.nn_file, 'r')
         network = cPickle.load(handle)
 
+    logging.debug('network type is')
+    logging.debug(parameters.network_type)
     if parameters.network_type.find('lstm') >= 0:
         import recurrent_agent
         agent_class = recurrent_agent.RecurrentAgent
