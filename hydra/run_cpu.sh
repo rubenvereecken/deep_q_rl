@@ -13,7 +13,7 @@ SCRIPT=${SCRIPT:="./run_nips.py"}
 NETWORK_TYPE=${NETWORK_TYPE:-nips_cpu}
 THIS_SCRIPT="../hydra/run_cpu.sh"
 
-if [ -z $REP ]; then
+if [ ! -z $REP ]; then
   POSTFIX="-rep_$REP"
 fi
 

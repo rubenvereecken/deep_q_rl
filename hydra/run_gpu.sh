@@ -16,7 +16,7 @@ SCRIPT=${SCRIPT:="./run_nips.py"}
 NETWORK_TYPE=${NETWORK_TYPE:-nips_cudnn}
 THIS_SCRIPT="../hydra/run_gpu.sh"
 
-if [ -z $REP ]; then
+if [ ! -z $REP ]; then
   POSTFIX="-rep_$REP"
 fi
 
