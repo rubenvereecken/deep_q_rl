@@ -115,12 +115,13 @@ class DataSet(object):
         indices = np.arange(index, end_index + 1)
         next_indices = indices + 1
         this_batch_size = len(indices)
+        states_dim = (this_batch_size, self.phi_length, self.num_channels,
+                self.height, self.width)
 
         # Allocate and fill arrays
-        # Reshape to a 1-channel img
-        # This used to be a reshape but I went with depth channel in the end
-        states = self.imgs.take(indices, axis=0, mode='wrap')
-        next_states = self.imgs.take(next_indices, axis=0, mode='wrap')
+        # Reshape states because they don't have a frame dimension
+        states = np.reshape(self.imgs.take(indices, axis=0, mode='wrap'), states_dim)
+        next_states = np.reshape(self.imgs.take(next_indices, axis=0, mode='wrap'), states_dim)
         actions = np.reshape(self.actions.take(indices, mode='wrap'),
                 (this_batch_size, 1))
         rewards = np.reshape(self.rewards.take(indices, mode='wrap'),

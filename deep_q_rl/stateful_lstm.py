@@ -216,18 +216,18 @@ class LSTMLayer(MergeLayer):
             self.W_cell_to_outgate = self.add_param(
                 outgate.W_cell, (num_units, ), name="W_cell_to_outgate")
 
-        # self.cell = self.add_param(
-        #     init.Constant(0.), (1, num_units), name="cell",
-        #     trainable=False, regularizable=False)
-
-        self.cell = theano.shared(np.zeros((1, num_units), dtype=theano.config.floatX),
+        cell_shared = theano.shared(np.zeros((1, num_units), dtype=theano.config.floatX),
                 name="cell")
-        self.hid = theano.shared(np.zeros((1, num_units), dtype=theano.config.floatX),
+        hid_shared = theano.shared(np.zeros((1, num_units), dtype=theano.config.floatX),
                 name="hid")
 
-        # self.hid = self.add_param(
-        #         init.Constant(0.), (1, self.num_units), name="hid",
-        #         trainable=False, regularizable=False)
+        self.cell = self.add_param(
+            cell_shared, (1, num_units), name="cell",
+            trainable=learn_init, regularizable=False)
+
+        self.hid = self.add_param(
+                hid_shared, (1, self.num_units), name="hid",
+                trainable=learn_init, regularizable=False)
 
         # TODO Figure out how trainable=learn_init actually works
         # It has something to do with gradient backprop
