@@ -24,13 +24,18 @@ class RecurrentAgent(NeuralAgent):
                  network_params
                 )
         logging.debug('Initialized Recurrent Agent')
+        self.resettable = self.network_params['network_lstm_type'] == 'mine'
+        self.reset_on_training = self.resettable and \
+                self.network_params['network_lstm_reset_on_training']
+        self.reset_on_start = self.resettable and \
+                self.network_params['network_lstm_reset_on_start']
 
 
     def start_episode(self, observation):
         action = super(RecurrentAgent, self).start_episode(observation)
 
         # Reset LSTM state, I think we should start anew each episode
-        if self.network_params['network_lstm_reset_on_start']:
+        if self.reset_on_start:
             self.network.lstm.hid.set_value(np.zeros((1,
                 self.network_params['network_lstm_layer_size']), dtype=theano.config.floatX))
             self.network.lstm.cell.set_value(np.zeros((1,
@@ -48,14 +53,14 @@ class RecurrentAgent(NeuralAgent):
         states, actions, rewards, next_states, terminals = \
                 self.data_set.random_sequential_batch(self.network.batch_size)
         # Save old state
-        if self.network_params['network_lstm_reset_on_training']:
+        if self.reset_on_training:
             hid = self.network.lstm.hid.get_value(borrow=False)
             cell = self.network.lstm.cell.get_value(borrow=False)
             self.network.lstm.hid.set_value(np.zeros_like(hid))
             self.network.lstm.cell.set_value(np.zeros_like(cell))
 
         # Reset the target network's inner state for this episode
-        if self.network_params['network_lstm_reset_on_start']:
+        if self.reset_on_start:
             self.network.next_lstm.hid.set_value(np.zeros_like(hid))
             self.network.next_lstm.cell.set_value(np.zeros_like(cell))
 
@@ -64,7 +69,7 @@ class RecurrentAgent(NeuralAgent):
 
         # Since the network is also used to generate exploration Q values,
         # better reset its previous state
-        if self.network_params['network_lstm_reset_on_training']:
+        if self.reset_on_training:
             self.network.lstm.hid.set_value(hid)
             self.network.lstm.cell.set_value(cell)
 

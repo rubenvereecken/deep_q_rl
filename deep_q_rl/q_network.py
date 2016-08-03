@@ -611,23 +611,25 @@ class DeepQLearner:
             # dimshuffle=True
         )
 
-        default_gate = lasagne.layers.Gate(
-            W_in=lasagne.init.Normal(.01),
-            W_hid=lasagne.init.Normal(.01),
-            W_cell=lasagne.init.Normal(.01),
-            b=lasagne.init.Constant(.1),
-            nonlinearity=lasagne.nonlinearities.sigmoid
-        )
+        # TODO check out diff between gates? seriously where did I get this
+        # default_gate = lasagne.layers.Gate(
+        #     W_in=lasagne.init.Normal(.01),
+        #     W_hid=lasagne.init.Normal(.01),
+        #     W_cell=lasagne.init.Normal(.01),
+        #     b=lasagne.init.Constant(.1),
+        #     nonlinearity=lasagne.nonlinearities.sigmoid
+        # )
 
         l_lstm1 = LSTMLayer(
                 l_conv2,
                 num_units=self.network_params['network_lstm_layer_size'] or 256,
-                ingate = default_gate,
-                outgate = default_gate,
-                forgetgate = default_gate,
-                cell = default_gate,
+                # ingate = default_gate,
+                # outgate = default_gate,
+                # forgetgate = default_gate,
+                # cell = default_gate,
                 # DRQ Paper says adding a ReLU after LSTM sucked,
                 # Not sure if they meant as activation function or on top of it
+                # TODO this is usually a tanh
                 nonlinearity=lasagne.nonlinearities.rectify,
                 # This was for the stateless LSTM, unneeded now
                 learn_init=self.network_params['network_lstm_learn_init'] or False,
@@ -636,7 +638,6 @@ class DeepQLearner:
                 # grad_clipping=1, # From alex graves' paper, not sure here
                 # This value comes from the other LSTM paper
                 grad_clipping=self.network_params['network_lstm_grad_clipping'] or 10,
-                precompute_input=False, # Should be a speedup
                 only_return_final=True # Only need output for last frame
                 )
         print lasagne.layers.get_output_shape(l_lstm1)
