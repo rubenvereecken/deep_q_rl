@@ -161,7 +161,7 @@ class DeepQLearner:
             raise ValueError("Bad accumulator: {}".format(batch_accumulator))
 
         params = lasagne.layers.helper.get_all_params(self.l_out)
-        print params
+        # print params
         givens = {
             states: self.states_shared,
             next_states: self.next_states_shared,
@@ -246,7 +246,6 @@ class DeepQLearner:
 
         Returns: average loss
         """
-
         self.states_shared.set_value(states)
         self.next_states_shared.set_value(next_states)
         self.actions_shared.set_value(actions)
@@ -631,7 +630,7 @@ class DeepQLearner:
                 # Not sure if they meant as activation function or on top of it
                 nonlinearity=lasagne.nonlinearities.rectify,
                 # This was for the stateless LSTM, unneeded now
-                learn_init=False,
+                learn_init=self.network_params['network_lstm_learn_init'] or False,
                 peepholes=True, # Internal connection from cell to gates
                 gradient_steps=self.network_params['network_lstm_steps'] or 10, # -1 is entire history
                 # grad_clipping=1, # From alex graves' paper, not sure here

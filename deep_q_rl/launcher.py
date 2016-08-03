@@ -198,6 +198,10 @@ def process_args(args, defaults, description):
     parser.add_argument('--network_lstm_no_reset_on_training',
             dest='network_lstm_reset_on_training', action='store_false')
     parser.add_argument('--network_lstm_type', type=str, default='original')
+    parser.add_argument('--network_lstm_learn_init',
+            dest='network_lstm_learn_init', action='store_true')
+    parser.add_argument('--network_lstm_no_learn_init',
+            dest='network_lstm_learn_init', action='store_false')
 
     parser.set_defaults(
             network_lstm_reset_on_start=True,
