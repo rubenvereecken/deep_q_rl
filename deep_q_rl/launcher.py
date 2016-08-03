@@ -202,10 +202,13 @@ def process_args(args, defaults, description):
             dest='network_lstm_learn_init', action='store_true')
     parser.add_argument('--network_lstm_no_learn_init',
             dest='network_lstm_learn_init', action='store_false')
+    parser.add_argument('--network_late_fusion_no_share',
+            dest='network_late_fusion_share', action='store_false')
 
     parser.set_defaults(
             network_lstm_reset_on_start=True,
-            network_lstm_reset_on_training=True
+            network_lstm_reset_on_training=True,
+            network_late_fusion_share=True
             )
 
     parameters = parser.parse_args(args)

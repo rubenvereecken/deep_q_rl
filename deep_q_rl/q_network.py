@@ -371,27 +371,36 @@ class DeepQLearner:
         # Have 2 layers
         conv_params_by_layer=[(16, (8, 8), (4, 4)), (32, (4, 4), (2, 2))]
 
-        # Share weights across two layer at the same level
-        shared_weights=[
-            theano.shared(lasagne.init.Normal(.01)((16, num_channels, 8, 8))),
-            # The 16 channels come from the filter size 16 of the previous one
-            theano.shared(lasagne.init.Normal(.01)((32, 16, 4, 4))),
-        ]
+        if self.network_params['network_late_fusion_share']:
+            # Share weights across two layer at the same level
+            shared_weights=[
+                theano.shared(lasagne.init.Normal(.01)((16, num_channels, 8, 8))),
+                # The 16 channels come from the filter size 16 of the previous one
+                theano.shared(lasagne.init.Normal(.01)((32, 16, 4, 4))),
+            ]
+
+            shared_biases = [
+                theano.shared(lasagne.init.Normal(.1)((16,))),
+                theano.shared(lasagne.init.Normal(.1)((32,))),
+            ]
 
         for layer_i, params in enumerate(conv_params_by_layer):
             for conv_i, prev in enumerate(previous):
-                # reshape = lasagne.layers.ReshapeLayer(prev,
-                #         shape=(-1, 1, input_width, input_height))
+                if self.network_params['network_late_fusion_share']:
+                    W = shared_weights[layer_i]
+                    b = shared_biases[layer_i]
+                else:
+                    W = lasagne.init.Normal(.01)
+                    b = lasagne.init.Normal(.1)
+
                 conv = conv_layer(
                     prev,
                     num_filters=params[0],
                     filter_size=params[1],
                     stride=params[2],
                     nonlinearity=lasagne.nonlinearities.rectify,
-                    W=shared_weights[layer_i],
-                    # TODO should I share biases as well?
-                    # It's of shape num_filters x 1
-                    b=lasagne.init.Constant(.1)
+                    W=W,
+                    b=b
                 )
                 print lasagne.layers.get_output_shape(conv)
                 # print conv.get_W_shape()
