@@ -12,6 +12,7 @@ TIME_STR=`python -c "import time; print time.strftime('%d-%m-%Y_%H-%M-%S')"`
 SCRIPT=${SCRIPT:="./run_nips.py"}
 NETWORK_TYPE=${NETWORK_TYPE:-nips_cpu}
 THIS_SCRIPT="../hydra/run_cpu.sh"
+GIT_REV=$(git rev-parse HEAD)
 
 if [ -z $REP ]; then
   POSTFIX="-rep_$REP"
@@ -28,6 +29,7 @@ fi
 mkdir -p $SAVE_PATH
 echo "Saving to $SAVE_PATH"
 cp $THIS_SCRIPT $SAVE_PATH/run.sh
+echo $GIT_REV > $SAVE_PATH/gitrev
 
 ROM=${ROM:="space_invaders"}
 

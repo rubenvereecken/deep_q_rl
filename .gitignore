@@ -3,3 +3,4 @@ roms
 **/*.ipynb_checkpoints
 *.pkl
 logs
+results
