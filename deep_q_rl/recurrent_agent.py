@@ -52,10 +52,12 @@ class RecurrentAgent(NeuralAgent):
         """
         states, actions, rewards, next_states, terminals = \
                 self.data_set.random_sequential_batch(self.network.batch_size)
-        # Save old state
-        if self.reset_on_training:
+        if self.reset_on_training or self.reset_on_start:
             hid = self.network.lstm.hid.get_value(borrow=False)
             cell = self.network.lstm.cell.get_value(borrow=False)
+
+        # Save old state
+        if self.reset_on_training:
             self.network.lstm.hid.set_value(np.zeros_like(hid))
             self.network.lstm.cell.set_value(np.zeros_like(cell))
 

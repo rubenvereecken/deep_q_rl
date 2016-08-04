@@ -48,6 +48,9 @@ class DeepQLearner:
         self.freeze_interval = freeze_interval
         self.rng = rng
 
+        self.lstm = None
+        self.next_lstm = None
+
         print('network parameters', network_params)
         self.network_params = network_params
 
@@ -170,19 +173,35 @@ class DeepQLearner:
             terminals: self.terminals_shared
         }
         if update_rule == 'deepmind_rmsprop':
-            updates = deepmind_rmsprop(loss, params, self.lr, self.rho,
+            update_for = lambda params: deepmind_rmsprop(loss, params, self.lr, self.rho,
                                        self.rms_epsilon)
         elif update_rule == 'rmsprop':
-            updates = lasagne.updates.rmsprop(loss, params, self.lr, self.rho,
+            update_for = lambda params: lasagne.updates.rmsprop(loss, params, self.lr, self.rho,
                                               self.rms_epsilon)
         elif update_rule == 'sgd':
-            updates = lasagne.updates.sgd(loss, params, self.lr)
+            update_for = lambda params: lasagne.updates.sgd(loss, params, self.lr)
         else:
             raise ValueError("Unrecognized update: {}".format(update_rule))
+
+        updates = update_for(params)
 
         if self.momentum > 0:
             updates = lasagne.updates.apply_momentum(updates, None,
                                                      self.momentum)
+
+        # This bit fixes the default_update on next_lstm, since that's usually
+        # not supposed to have updates. Apparently default doesn't mean it happens
+        # automatically, you still have to add it to the updates dict. That's what this does.
+        if self.next_lstm:
+            more_updates = lasagne.updates.rmsprop(loss,
+                    lasagne.layers.helper.get_all_params(self.next_lstm),
+                    self.lr, self.rho, self.rms_epsilon)
+            for k, v in more_updates.items():
+                if k.name in ['hid', 'cell']:
+                    # print type(k)
+                    # print k
+                    updates[k] = v
+
 
         self._train = theano.function([], [loss, q_vals], updates=updates,
                                       givens=givens)
