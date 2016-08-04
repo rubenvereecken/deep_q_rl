@@ -11,6 +11,7 @@ from common import *
 
 def plot_reward(results, outdir, title, ax):
     ax.plot(results['epoch'], results['reward_per_episode'], 'b-')
+    ax.plot(results['epoch'], smoothing(results['reward_per_episode'], 10), 'r-')
     ax.set_ylabel('Average reward per epoch', color='b')
     ax.set_title(title)
 
@@ -20,6 +21,7 @@ def plot_reward(results, outdir, title, ax):
 
 def plot_q(results, outdir, title, ax):
     ax.plot(results['epoch'], results['mean_q'], 'b-')
+    ax.plot(results['epoch'], smoothing(results['mean_q'], 10), 'r-')
     ax.set_ylabel('Average Q per epoch', color='b')
     ax.set_title(title)
 
@@ -60,7 +62,7 @@ if __name__ == '__main__':
     plot_q(results, outdir, params.name)
     plot_reward_and_q(results, outdir, params.name)
 
-    
+
 
 
 
