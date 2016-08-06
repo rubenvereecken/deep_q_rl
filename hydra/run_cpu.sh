@@ -53,7 +53,7 @@ export OMP_NUM_THREADS=4
 $SCRIPT $PARAMS $@
 
 ENDTIME=$(date +%s)
-ELAPSED_SECONDS=$(($STARTTIME - $ENDTIME))
+ELAPSED_SECONDS=$(($ENDTIME - $STARTTIME))
 echo "Took $ELAPSED_SECONDS seconds or approximately $(($ELAPSED_SECONDS / 3600)) hours" > $SAVE_PATH/time
 
 echo "FINISHED" > $SAVE_PATH/state

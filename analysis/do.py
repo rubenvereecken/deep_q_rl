@@ -40,7 +40,7 @@ if __name__ == '__main__':
         pass # dont even care
 
     r = re.compile('(?P<experiment>.*?)' +
-                   '[_-]+(rep.(?P<rep>[0-9]+))?' +
+                   '([_-]+rep.(?P<rep>[0-9]+))?' +
                    '([_-]+(?P<date>[0-9]{2}-[0-9]{2}.*?))?$')
 
     combo_fig = plt.figure(figsize=(20, 10))

@@ -1,5 +1,6 @@
 *.pyc
 roms
+all_roms
 **/*.ipynb_checkpoints
 *.pkl
 logs
