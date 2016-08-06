@@ -1,7 +1,7 @@
 #!/bin/bash -l
 #PBS -l nodes=1:ppn=4:gpus=1:gpgpu
 #PBS -l mem=15gb
-#PBS -l walltime=300:00:00
+#PBS -l walltime=125:00:00
 #PBS -M rvereeck@vub.ac.be
 #PBS -m e
 #PBS -d /u/rvereeck/deep_q_rl/deep_q_rl/
@@ -16,6 +16,7 @@ SCRIPT=${SCRIPT:="./run_nips.py"}
 NETWORK_TYPE=${NETWORK_TYPE:-nips_cudnn}
 THIS_SCRIPT="../hydra/run_gpu.sh"
 GIT_REV=$(git rev-parse HEAD)
+STARTTIME=$(date +%s)
 
 if [ ! -z $REP ]; then
   POSTFIX="-rep_$REP"
@@ -33,7 +34,7 @@ mkdir -p $SAVE_PATH
 echo "Saving to $SAVE_PATH"
 cp $THIS_SCRIPT $SAVE_PATH/run.sh
 echo $GIT_REV > $SAVE_PATH/gitrev
-echo $@ > $SAVE_PATH/hydra.sh
+echo $@ > $SAVE_PATH/params
 
 ROM=${ROM:="space_invaders"}
 
@@ -54,5 +55,9 @@ export OMP_NUM_THREADS=4
 
 # Call the experiment
 $SCRIPT $PARAMS $@
+
+ENDTIME=$(date +%s)
+ELAPSED_SECONDS=$(($STARTTIME - $ENDTIME))
+echo "Took $ELAPSED_SECONDS seconds or approximately $(($ELAPSED_SECONDS / 3600)) hours" > $SAVE_PATH/time
 
 echo "FINISHED" > $SAVE_PATH/state

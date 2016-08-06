@@ -15,4 +15,4 @@ done
 
 mkdir -p $LOG_DIR
 cd $LOG_DIR
-rsync -avz -e ssh $SSH_STRING$dirs . --progress --exclude "*network_file*" --exclude "state"
+rsync -avz -e ssh $SSH_STRING$dirs . --progress --include "*network_file_[12]00.pkl" --exclude "*network_file*" --exclude "state"
