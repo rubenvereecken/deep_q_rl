@@ -1,7 +1,7 @@
 #!/bin/bash -l
 #PBS -l nodes=1:ppn=4:gpus=1:gpgpu
 #PBS -l mem=15gb
-#PBS -l walltime=125:00:00
+#PBS -l walltime=100:00:00
 #PBS -M rvereeck@vub.ac.be
 #PBS -m e
 #PBS -d /u/rvereeck/deep_q_rl/deep_q_rl/
