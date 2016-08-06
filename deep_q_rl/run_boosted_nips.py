@@ -17,7 +17,7 @@ class Defaults:
     # ----------------------
     STEPS_PER_EPOCH = 50000
     EPOCHS = 100
-    STEPS_PER_TEST = 25000
+    STEPS_PER_TEST = 50000
     PROGRESS_FREQUENCY = 5000
 
     # ----------------------
