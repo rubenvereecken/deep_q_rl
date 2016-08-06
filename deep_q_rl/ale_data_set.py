@@ -115,7 +115,7 @@ class DataSet(object):
         indices = np.arange(index, end_index + 1)
         next_indices = indices + 1
         this_batch_size = len(indices)
-        states_dim = (this_batch_size, self.phi_length, self.num_channels,
+        states_dim = (this_batch_size, 1, self.num_channels,
                 self.height, self.width)
 
         # Allocate and fill arrays

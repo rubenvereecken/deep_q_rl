@@ -208,7 +208,8 @@ def process_args(args, defaults, description):
     parser.set_defaults(
             network_lstm_reset_on_start=True,
             network_lstm_reset_on_training=True,
-            network_late_fusion_share=True
+            network_late_fusion_share=True,
+            network_lstm_learn_init=False
             )
 
     parameters = parser.parse_args(args)
@@ -234,8 +235,8 @@ def process_args(args, defaults, description):
 
     # If some kind of recurrent network
     if parameters.network_type.find('lstm') >= 0:
-        print parameters.phi_length
-        # parameters.phi_length = 1
+        # print parameters.phi_length
+        parameters.phi_length = 1
 
     # This addresses an inconsistency between the Nature paper and the Deepmind
     # code. The paper states that the target network update frequency is
