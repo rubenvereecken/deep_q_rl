@@ -24,6 +24,8 @@ fi
 
 # Label out directory
 LABEL=${LABEL:=$PBS_JOBNAME}
+ROM=${ROM:="space_invaders"}
+
 if [ ! -z $LABEL ]; then
   SAVE_PATH="${WORKDIR}/${LABEL}-${ROM}$POSTFIX-${TIME_STR}"
 else
@@ -35,8 +37,6 @@ echo "Saving to $SAVE_PATH"
 cp $THIS_SCRIPT $SAVE_PATH/run.sh
 echo $GIT_REV > $SAVE_PATH/gitrev
 echo $@ > $SAVE_PATH/params
-
-ROM=${ROM:="space_invaders"}
 
 PARAMS="--save-path=$SAVE_PATH -r ${ROM} --log_level=DEBUG --dont-generate-logdir --undeterministic"
 if [ ! -z $NETWORK_TYPE ]; then
