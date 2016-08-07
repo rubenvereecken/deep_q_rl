@@ -76,10 +76,13 @@ if __name__ == '__main__':
                 print name
                 learning_dict[name] = learning
                 results_dict[name] = results
+        except IOError as e:
+            print "Skipping {}".format(name)
         except Exception as e:
             print type(e)
             print e.message
-            print "Skipping {} because of an exception".format(name)
+            print "Skipping {} because something went wrong".format(name)
+
 
     # Some experiments were repeated - average those
     for k, v in repeated.iteritems():
@@ -104,12 +107,11 @@ if __name__ == '__main__':
         }
 
     num_results = len(results_dict.keys())
-
-    overview_size = (40, 40)
+    side = roundup(np.sqrt(num_results))
+    overview_size = (side*7.5, side*7.5)
     # loss_overview = plt.figure(figsize=overview_size)
     q_overview = plt.figure(figsize=overview_size)
     reward_overview = plt.figure(figsize=overview_size)
-    side = roundup(np.sqrt(num_results))
 
     for i, (name, results) in enumerate(results_dict.iteritems()):
         if params.individual:
