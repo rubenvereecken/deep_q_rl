@@ -21,7 +21,7 @@ class ALEExperiment(object):
     def __init__(self, ale, agent, resized_width, resized_height, num_channels,
                  resize_method, color_mode, num_epochs, epoch_length, test_length,
                  death_ends_episode, max_start_nullops, rng, progress_frequency,
-                 start_epoch=1):
+                 observe_p, start_epoch=1):
         self.ale = ale
         self.agent = agent
         self.color_mode = color_mode
@@ -37,6 +37,7 @@ class ALEExperiment(object):
         self.resize_method = resize_method
         self.width, self.height = ale.getScreenDims()
         self.num_channels = num_channels
+        self.observe_p = observe_p
 
         self.buffer_length = 2
         self.buffer_count = 0
@@ -45,6 +46,8 @@ class ALEExperiment(object):
                                     dtype=np.uint8)
         self.rgb_buffer = np.empty((self.buffer_length, 3,
                                     resized_height, resized_width),
+                                    dtype=np.uint8)
+        self.black_screen = np.zeros((num_channels, resized_height, resized_width),
                                     dtype=np.uint8)
 
         self.terminal_lol = False # Most recent episode ended on a loss of life
@@ -211,7 +214,9 @@ class ALEExperiment(object):
 
         resized_image = self.resize_image(image)
 
-        if self.color_mode.startswith('rgb'):
+        if self.rng.rand() >= self.observe_p:
+            return self.black_screen
+        elif self.color_mode.startswith('rgb'):
             rgb = self.rgb_buffer[index]
             # TODO uuh should I copy?
             asRGB(resized_image, rgb)

@@ -186,6 +186,8 @@ def process_args(args, defaults, description):
             action='store_true', help='Resume from save_path')
     parser.add_argument('--color-mode', dest='color_mode', default='grayscale',
             help='grayscale|rgb')
+    parser.add_argument('--observe-probability', dest='observe_probability',
+                        default=1.0, type=float)
 
     parser.add_argument('--network_lstm_layer_size', type=int, default=256)
     parser.add_argument('--network_lstm_steps', type=int)
@@ -409,6 +411,7 @@ def launch(args, defaults, description):
                                               parameters.max_start_nullops,
                                               rng,
                                               parameters.progress_frequency,
+                                              parameters.observe_probability,
                                               start_epoch)
 
 

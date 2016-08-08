@@ -18,6 +18,8 @@ THIS_SCRIPT="../hydra/run_gpu.sh"
 GIT_REV=$(git rev-parse HEAD)
 STARTTIME=$(date +%s)
 
+set -e
+
 if [ ! -z $REP ]; then
   POSTFIX="-rep_$REP"
 fi
