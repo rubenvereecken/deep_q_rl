@@ -60,4 +60,4 @@ ENDTIME=$(date +%s)
 ELAPSED_SECONDS=$(($ENDTIME - $STARTTIME))
 echo "Took $ELAPSED_SECONDS seconds or approximately $(($ELAPSED_SECONDS / 3600)) hours" > $SAVE_PATH/time
 
-50000 "FINISHED" > $SAVE_PATH/state
+echo "FINISHED" > $SAVE_PATH/state
