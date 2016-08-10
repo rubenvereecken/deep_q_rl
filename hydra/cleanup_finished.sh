@@ -4,6 +4,7 @@ SSH_STRING="rvereeck@hydra.vub.ac.be"
 finished_dirs=`ssh ${SSH_STRING} 'bash -s' < finished.sh`
 num_dirs=$(echo $finished_dirs | wc -w)
 if [ $num_dirs -eq 0 ]; then
+  echo "Nothing to clean. Exiting"
   exit;
 fi
 echo $finished_dirs | tr ' ' '\n'
