@@ -309,6 +309,10 @@ def launch(args, defaults, description):
     if parameters.profile:
         profile.configure_theano_for_profiling(save_path)
 
+    # Hardwire this for now. Skip of 4 means lasers become invisible
+    if parameters.rom == 'space_invaders':
+        parameters.frame_skip = 3
+
     if parameters.rom.endswith('.bin'):
         rom = parameters.rom
     else:
