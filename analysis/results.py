@@ -13,7 +13,7 @@ def plot_reward(results, outdir, title, ax):
     ax.plot(results['epoch'], results['reward_per_episode'], 'b-')
     ax.plot(results['epoch'], smoothing(results['reward_per_episode'], 10), 'r-')
     ax.set_ylabel('Average reward per epoch', color='b')
-    ax.set_title(title)
+    ax.set_title(title, fontsize=9)
 
     # plt.savefig(os.path.join(outdir, 'avg_reward_{}.png'.format(title)))
     # plt.clf()

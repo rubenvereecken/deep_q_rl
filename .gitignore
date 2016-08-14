@@ -5,3 +5,4 @@ all_roms
 *.pkl
 logs
 results
+out
