@@ -190,8 +190,8 @@ def process_args(args, defaults, description):
                         default=1.0, type=float)
 
     parser.add_argument('--network_lstm_layer_size', type=int, default=256)
-    parser.add_argument('--network_lstm_steps', type=int)
-    parser.add_argument('--network_lstm_grad_clipping', type=int)
+    parser.add_argument('--network_lstm_steps', type=int, default=10)
+    parser.add_argument('--network_lstm_grad_clipping', type=int, default=10)
     parser.add_argument('--network_temp_filter1', type=int, default=2)
     parser.add_argument('--network_temp_filter2', type=int, default=2)
     parser.add_argument('--network_final_pooling_size', type=int, default=0)

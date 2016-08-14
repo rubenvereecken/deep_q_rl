@@ -51,7 +51,7 @@ class DeepQLearner:
         self.lstm = None
         self.next_lstm = None
 
-        print('network parameters', network_params)
+        logging.debug('network parameters', network_params)
         self.network_params = network_params
 
         lasagne.random.set_rng(self.rng)
@@ -118,6 +118,8 @@ class DeepQLearner:
 
         # self.mask_shared = theano.shared(np.ones((batch_size, num_frames),
         #     dtype='int32'))
+
+        # lstmout = lasagne.layers.get_output(self.lstm, states / input_scale)
 
         q_vals = lasagne.layers.get_output(self.l_out, states / input_scale)
                 # mask_input=mask)
@@ -189,24 +191,22 @@ class DeepQLearner:
             updates = lasagne.updates.apply_momentum(updates, None,
                                                      self.momentum)
 
-        # This bit fixes the default_update on next_lstm, since that's usually
-        # not supposed to have updates. Apparently default doesn't mean it happens
-        # automatically, you still have to add it to the updates dict. That's what this does.
-        if self.next_lstm:
-            more_updates = lasagne.updates.rmsprop(loss,
-                    lasagne.layers.helper.get_all_params(self.next_lstm),
-                    self.lr, self.rho, self.rms_epsilon)
-            for k, v in more_updates.items():
-                if k.name in ['hid', 'cell']:
-                    # print type(k)
-                    # print k
-                    updates[k] = v
-
+        # # Super mega shady stuff
+        # # Somehow an update sneaks in for cell and hid. Kill it with fire
+        if self.lstm:
+            delete_keys = [k for k, v in updates.items() if k.name in ['cell', 'hid']]
+            # print delete_keys
+            for key in delete_keys:
+                del updates[key]
 
         self._train = theano.function([], [loss, q_vals], updates=updates,
                                       givens=givens)
         self._q_vals = theano.function([], q_vals,
                                        givens={states: self.states_shared})
+
+        # self.lstmout = theano.function([], lstmout,
+        #                                givens={states: self.states_shared},
+        #                                on_unused_input='warn')
 
     def build_network(self, network_type, num_channels, input_width, input_height,
                       output_dim, num_frames, batch_size):
@@ -288,7 +288,9 @@ class DeepQLearner:
     # TODO use this when testing instead of one at a time
     def more_q_vals(self, states):
         self.states_shared.set_value(states)
-        return self._q_vals()
+        qvals = self._q_vals()
+        # print np.sum(lstmout == self.lstm.hid.get_value())
+        return qvals
 
     def choose_action(self, state, epsilon):
         if self.rng.rand() < epsilon:
@@ -640,25 +642,34 @@ class DeepQLearner:
         )
 
         # TODO check out diff between gates? seriously where did I get this
-        # default_gate = lasagne.layers.Gate(
-        #     W_in=lasagne.init.Normal(.01),
-        #     W_hid=lasagne.init.Normal(.01),
-        #     W_cell=lasagne.init.Normal(.01),
-        #     b=lasagne.init.Constant(.1),
-        #     nonlinearity=lasagne.nonlinearities.sigmoid
-        # )
+        default_gate = lasagne.layers.Gate(
+            W_in=lasagne.init.Normal(.01),
+            W_hid=lasagne.init.Normal(.01),
+            W_cell=lasagne.init.Normal(.01),
+            b=lasagne.init.Constant(.1),
+            nonlinearity=lasagne.nonlinearities.sigmoid
+        )
+
+
+        from lasagne.layers.recurrent import Gate
 
         l_lstm1 = LSTMLayer(
                 l_conv2,
                 num_units=self.network_params['network_lstm_layer_size'] or 256,
                 # ingate = default_gate,
                 # outgate = default_gate,
-                # forgetgate = default_gate,
+
+                # If I use this most out values quickly become 0
+                # For :class:`LSTMLayer` the bias of the forget gate is often initialized to
+                # a large positive value to encourage the layer initially remember the cell
+                # forgetgate = Gate(b=lasagne.init.Constant(5.0)),
+                # forgetgate=default_gate,
                 # cell = default_gate,
                 # DRQ Paper says adding a ReLU after LSTM sucked,
                 # Not sure if they meant as activation function or on top of it
                 # TODO this is usually a tanh
-                nonlinearity=lasagne.nonlinearities.rectify,
+                # TODO mention in thesis drqn says rectify sucks
+                # nonlinearity=lasagne.nonlinearities.rectify,
                 # This was for the stateless LSTM, unneeded now
                 learn_init=self.network_params['network_lstm_learn_init'] or False,
                 peepholes=True, # Internal connection from cell to gates
@@ -667,8 +678,7 @@ class DeepQLearner:
                 # This value comes from the other LSTM paper
                 grad_clipping=self.network_params['network_lstm_grad_clipping'] or 10,
                 only_return_final=True # Only need output for last frame
-                )
-        print lasagne.layers.get_output_shape(l_lstm1)
+        )
 
         l_out = lasagne.layers.DenseLayer(
             l_lstm1,

@@ -221,12 +221,13 @@ class LSTMLayer(MergeLayer):
         hid_shared = theano.shared(np.zeros((1, num_units), dtype=theano.config.floatX),
                 name="hid")
 
+        # I disabled training by overriding the update anyway
         self.cell = self.add_param(
-            cell_shared, (1, num_units), name="cell",
+            cell_shared, (1, num_units),
             trainable=learn_init, regularizable=False)
 
         self.hid = self.add_param(
-                hid_shared, (1, self.num_units), name="hid",
+                hid_shared, (1, self.num_units),
                 trainable=learn_init, regularizable=False)
 
         # TODO Figure out how trainable=learn_init actually works
@@ -451,6 +452,9 @@ class LSTMLayer(MergeLayer):
                 non_sequences=non_seqs,
                 strict=True)[0]
 
+        # Alright alright these two seem to be working
+        # but only if I take the hid/cell update out of updates gotten
+        # by lasagne, because fuck those
         self.hid.default_update = hid_out[-1]
         self.cell.default_update = cell_out[-1]
 

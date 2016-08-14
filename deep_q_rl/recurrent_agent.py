@@ -72,6 +72,7 @@ class RecurrentAgent(NeuralAgent):
         # Since the network is also used to generate exploration Q values,
         # better reset its previous state
         if self.reset_on_training:
+            # print self.network.lstm.cell.get_value()
             self.network.lstm.hid.set_value(hid)
             self.network.lstm.cell.set_value(cell)
 
